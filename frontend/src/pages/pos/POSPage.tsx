@@ -1,14 +1,4 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import Header from '@cloudscape-design/components/header';
-import Box from '@cloudscape-design/components/box';
-import Input from '@cloudscape-design/components/input';
-import Button from '@cloudscape-design/components/button';
-import SpaceBetween from '@cloudscape-design/components/space-between';
-import Select from '@cloudscape-design/components/select';
-import Modal from '@cloudscape-design/components/modal';
-import Badge from '@cloudscape-design/components/badge';
-import FormField from '@cloudscape-design/components/form-field';
-import SegmentedControl from '@cloudscape-design/components/segmented-control';
 
 import { useProductStore } from '../../store/useProductStore';
 import { useCustomerStore } from '../../store/useCustomerStore';
@@ -19,6 +9,16 @@ import { CurrencyText, formatMoney } from '../../components/common/CurrencyText'
 import { PrintThermalReceipt } from '../../components/print/PrintThermalReceipt';
 import { Invoice } from '../../types/invoice';
 import { Product } from '../../types/product';
+
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Badge } from '../../components/ui/badge';
+import { Label } from '../../components/ui/label';
+import { Tabs, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Card } from '../../components/ui/card';
+
 import { Minus, Plus, Trash2, ArrowRightLeft, CreditCard, ShoppingCart } from 'lucide-react';
 
 export const POSPage: React.FC = () => {
@@ -29,82 +29,44 @@ export const POSPage: React.FC = () => {
   const isDark = theme === 'dark';
 
   const colors = useMemo(() => {
-    return isDark
-      ? {
-          bgPage: '#0f172a',
-          bgCard: '#1e293b',
-          bgHeader: '#1e293b',
-          bgSubtle: '#0f172a',
-          bgHover: '#334155',
-          bgMuted: '#141e2e',
-          border: '#334155',
-          borderLight: '#1e293b',
-          borderHover: '#0972d3',
-          textPrimary: '#f8fafc',
-          textSecondary: '#94a3b8',
-          textMuted: '#64748b',
-          kbdBg: '#0f172a',
-          kbdBorder: '#334155',
-          kbdText: '#e2e8f0',
-          chipBg: '#1e293b',
-          chipBorder: '#334155',
-          chipText: '#e2e8f0',
-          chipSelectedBg: '#0972d3',
-          chipSelectedText: '#ffffff',
-          resizerBg: '#334155',
-          resizerHover: '#0972d3',
-          cartItemBg: '#1e293b',
-          cartItemBorder: '#334155',
-          stepperBg: '#0f172a',
-          stepperBorder: '#334155',
-          stepperBtnBg: '#1e293b',
-          stepperBtnHover: '#334155',
-          quickCashBg: '#1e293b',
-          quickCashBorder: '#334155',
-          quickCashText: '#e2e8f0',
-          exactCashBg: '#064e3b',
-          exactCashBorder: '#059669',
-          exactCashText: '#6ee7b7',
-          exactCashHover: '#047857',
-        }
-      : {
-          bgPage: '#f8fafc',
-          bgCard: '#ffffff',
-          bgHeader: '#ffffff',
-          bgSubtle: '#f8fafc',
-          bgHover: '#f1f5f9',
-          bgMuted: '#f1f5f9',
-          border: '#e2e8f0',
-          borderLight: '#f1f5f9',
-          borderHover: '#0972d3',
-          textPrimary: '#0f172a',
-          textSecondary: '#64748b',
-          textMuted: '#94a3b8',
-          kbdBg: '#f1f5f9',
-          kbdBorder: '#cbd5e1',
-          kbdText: '#334155',
-          chipBg: '#ffffff',
-          chipBorder: '#cbd5e1',
-          chipText: '#334155',
-          chipSelectedBg: '#0972d3',
-          chipSelectedText: '#ffffff',
-          resizerBg: '#e2e8f0',
-          resizerHover: '#0972d3',
-          cartItemBg: '#ffffff',
-          cartItemBorder: '#e2e8f0',
-          stepperBg: '#ffffff',
-          stepperBorder: '#cbd5e1',
-          stepperBtnBg: '#f8fafc',
-          stepperBtnHover: '#e2e8f0',
-          quickCashBg: '#ffffff',
-          quickCashBorder: '#cbd5e1',
-          quickCashText: '#334155',
-          exactCashBg: '#ecfdf5',
-          exactCashBorder: '#10b981',
-          exactCashText: '#047857',
-          exactCashHover: '#d1fae5',
-        };
-  }, [isDark]);
+    return {
+          bgPage: 'var(--background)',
+          bgCard: 'var(--card)',
+          bgHeader: 'var(--card)',
+          bgSubtle: 'var(--muted)',
+          bgHover: 'var(--accent)',
+          bgMuted: 'var(--muted)',
+          border: 'var(--border)',
+          borderLight: 'var(--border)',
+          borderHover: 'var(--ring)',
+          textPrimary: 'var(--foreground)',
+          textSecondary: 'var(--muted-foreground)',
+          textMuted: 'var(--muted-foreground)',
+          kbdBg: 'var(--muted)',
+          kbdBorder: 'var(--border)',
+          kbdText: 'var(--foreground)',
+          chipBg: 'var(--card)',
+          chipBorder: 'var(--border)',
+          chipText: 'var(--foreground)',
+          chipSelectedBg: 'var(--primary)',
+          chipSelectedText: 'var(--primary-foreground)',
+          resizerBg: 'var(--border)',
+          resizerHover: 'var(--ring)',
+          cartItemBg: 'var(--card)',
+          cartItemBorder: 'var(--border)',
+          stepperBg: 'var(--muted)',
+          stepperBorder: 'var(--border)',
+          stepperBtnBg: 'var(--card)',
+          stepperBtnHover: 'var(--accent)',
+          quickCashBg: 'var(--card)',
+          quickCashBorder: 'var(--border)',
+          quickCashText: 'var(--foreground)',
+          exactCashBg: 'var(--primary)',
+          exactCashBorder: 'var(--primary)',
+          exactCashText: 'var(--primary-foreground)',
+          exactCashHover: 'var(--primary)',
+    };
+  }, []);
 
   const products = useProductStore((state) => state.products);
   const getProductByBarcode = useProductStore((state) => state.getProductByBarcode);
@@ -447,130 +409,73 @@ export const POSPage: React.FC = () => {
         background: colors.bgPage,
       }}
     >
-      {/* Top Header & Operational Utility Toolbar */}
-      <div
-        style={{
-          background: colors.bgCard,
-          borderRadius: '8px',
-          padding: isMobile ? '8px 12px' : '10px 16px',
-          border: `1px solid ${colors.border}`,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '8px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <div style={{ fontWeight: 800, fontSize: isMobile ? '16px' : '18px', color: '#0972d3', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span>⚡ POS Checkout Counter</span>
-          </div>
-          <Badge color={drawerSession.isOpen ? 'green' : 'red'}>
-            {drawerSession.isOpen ? `Active • ${formatMoney(drawerSession.openingFloat, profile.currencySymbol)}` : 'Closed'}
-          </Badge>
-          {!isMobile && (
-            <span style={{ fontSize: '12px', color: colors.textSecondary }}>
-              Shortcuts: <kbd style={{ padding: '2px 4px', background: colors.kbdBg, borderRadius: '4px', border: `1px solid ${colors.kbdBorder}`, color: colors.kbdText }}>F2</kbd> Scan • <kbd style={{ padding: '2px 4px', background: colors.kbdBg, borderRadius: '4px', border: `1px solid ${colors.kbdBorder}`, color: colors.kbdText }}>F4</kbd> Hold • <kbd style={{ padding: '2px 4px', background: colors.kbdBg, borderRadius: '4px', border: `1px solid ${colors.kbdBorder}`, color: colors.kbdText }}>F9</kbd> Pay
+      {/* Mobile View Toggle Pills (Catalog vs Cart) */}
+      {isMobile && (
+        <div style={{ display: 'flex', width: '100%', gap: '6px', marginBottom: '4px' }}>
+          <button
+            type="button"
+            onClick={() => setMobileTab('catalog')}
+            style={{
+              flex: 1,
+              padding: '8px',
+              borderRadius: '6px',
+              border: mobileTab === 'catalog' ? '2px solid #0972d3' : `1px solid ${colors.border}`,
+              background: mobileTab === 'catalog' ? '#0972d3' : colors.bgSubtle,
+              color: mobileTab === 'catalog' ? '#ffffff' : colors.textPrimary,
+              fontWeight: 'bold',
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>🏷️ Products</span>
+            <span style={{
+              background: mobileTab === 'catalog' ? '#ffffff' : colors.bgHover,
+              color: mobileTab === 'catalog' ? '#0972d3' : colors.textSecondary,
+              padding: '0 6px',
+              borderRadius: '10px',
+              fontSize: '11px',
+            }}>
+              {filteredProducts.length}
             </span>
-          )}
-        </div>
-
-        {/* Cart Utilities */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          {heldCarts.length > 0 && (
-            <Button
-              iconName="file"
-              onClick={() => setIsHeldModalOpen(true)}
-            >
-              Held ({heldCarts.length})
-            </Button>
-          )}
-
-          <Button
-            disabled={items.length === 0}
-            iconName="calendar"
-            onClick={() => holdCurrentCart('Parked bill')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab('cart')}
+            style={{
+              flex: 1,
+              padding: '8px',
+              borderRadius: '6px',
+              border: mobileTab === 'cart' ? '2px solid #0972d3' : `1px solid ${colors.border}`,
+              background: mobileTab === 'cart' ? '#0972d3' : colors.bgSubtle,
+              color: mobileTab === 'cart' ? '#ffffff' : colors.textPrimary,
+              fontWeight: 'bold',
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+            }}
           >
-            {isMobile ? 'Park' : 'Park Bill'}
-          </Button>
-
-          <Button
-            disabled={items.length === 0}
-            iconName="remove"
-            onClick={clearCart}
-          >
-            Clear
-          </Button>
-        </div>
-
-        {/* Mobile View Toggle Pills (Catalog vs Cart) */}
-        {isMobile && (
-          <div style={{ display: 'flex', width: '100%', gap: '6px', paddingTop: '4px' }}>
-            <button
-              type="button"
-              onClick={() => setMobileTab('catalog')}
-              style={{
-                flex: 1,
-                padding: '8px',
-                borderRadius: '6px',
-                border: mobileTab === 'catalog' ? '2px solid #0972d3' : `1px solid ${colors.border}`,
-                background: mobileTab === 'catalog' ? '#0972d3' : colors.bgSubtle,
-                color: mobileTab === 'catalog' ? '#ffffff' : colors.textPrimary,
-                fontWeight: 'bold',
-                fontSize: '13px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-              }}
-            >
-              <span>🏷️ Products</span>
+            <span>🛒 Active Cart</span>
+            {totals.itemCount > 0 && (
               <span style={{
-                background: mobileTab === 'catalog' ? '#ffffff' : colors.bgHover,
-                color: mobileTab === 'catalog' ? '#0972d3' : colors.textSecondary,
+                background: mobileTab === 'cart' ? '#ffffff' : '#0972d3',
+                color: mobileTab === 'cart' ? '#0972d3' : '#ffffff',
                 padding: '0 6px',
                 borderRadius: '10px',
                 fontSize: '11px',
               }}>
-                {filteredProducts.length}
+                {totals.itemCount}
               </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileTab('cart')}
-              style={{
-                flex: 1,
-                padding: '8px',
-                borderRadius: '6px',
-                border: mobileTab === 'cart' ? '2px solid #0972d3' : `1px solid ${colors.border}`,
-                background: mobileTab === 'cart' ? '#0972d3' : colors.bgSubtle,
-                color: mobileTab === 'cart' ? '#ffffff' : colors.textPrimary,
-                fontWeight: 'bold',
-                fontSize: '13px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-              }}
-            >
-              <span>🛒 Active Cart</span>
-              {totals.itemCount > 0 && (
-                <span style={{
-                  background: mobileTab === 'cart' ? '#ffffff' : '#0972d3',
-                  color: mobileTab === 'cart' ? '#0972d3' : '#ffffff',
-                  padding: '0 6px',
-                  borderRadius: '10px',
-                  fontSize: '11px',
-                }}>
-                  {totals.itemCount}
-                </span>
-              )}
-            </button>
-          </div>
-        )}
-      </div>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Main Two-Column Draggable Layout Container */}
       <div
@@ -597,7 +502,7 @@ export const POSPage: React.FC = () => {
             background: colors.bgCard,
           }}
         >
-          {/* Search, Scanner & View Toggle Bar */}
+          {/* Header, Search, Scanner & View Toggle Bar */}
           <div
             style={{
               padding: '12px',
@@ -605,23 +510,39 @@ export const POSPage: React.FC = () => {
               background: colors.bgSubtle,
               display: 'flex',
               flexDirection: 'column',
-              gap: '10px',
+              gap: '12px',
             }}
           >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ fontWeight: 800, fontSize: isMobile ? '16px' : '18px', color: '#0972d3', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>⚡ POS Checkout Counter</span>
+                </div>
+                <Badge variant={drawerSession.isOpen ? "outline" : "destructive"} className={drawerSession.isOpen ? "bg-green-100 text-green-800" : ""}>
+                  {drawerSession.isOpen ? `Active • ${formatMoney(drawerSession.openingFloat, profile.currencySymbol)}` : 'Closed'}
+                </Badge>
+              </div>
+              {!isMobile && (
+                <span style={{ fontSize: '12px', color: colors.textSecondary }}>
+                  <kbd style={{ padding: '2px 4px', background: colors.kbdBg, borderRadius: '4px', border: `1px solid ${colors.kbdBorder}`, color: colors.kbdText }}>F2</kbd> Scan • <kbd style={{ padding: '2px 4px', background: colors.kbdBg, borderRadius: '4px', border: `1px solid ${colors.kbdBorder}`, color: colors.kbdText }}>F4</kbd> Hold • <kbd style={{ padding: '2px 4px', background: colors.kbdBg, borderRadius: '4px', border: `1px solid ${colors.kbdBorder}`, color: colors.kbdText }}>F9</kbd> Pay
+                </span>
+              )}
+            </div>
+
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <div style={{ flex: 1 }}>
                 <Input
                   ref={searchInputRef as any}
                   value={searchQuery}
-                  onChange={({ detail }) => setSearchQuery(detail.value)}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.detail.key === 'Enter') {
+                    if (e.key === 'Enter') {
                       handleBarcodeSubmit();
                     }
                   }}
                   placeholder="⚡ Scan Barcode or type Name / SKU (auto-scans or press Enter)..."
                   type="search"
-                  clearAriaLabel="Clear search"
+                  
                 />
               </div>
 
@@ -732,9 +653,9 @@ export const POSPage: React.FC = () => {
             }}
           >
             {filteredProducts.length === 0 ? (
-              <Box textAlign="center" padding="l" color="text-body-secondary">
+              <div className="text-center p-4">
                 No products found matching "{searchQuery}".
-              </Box>
+              </div>
             ) : viewMode === 'grid' ? (
               /* --- GRID CARD VIEW --- */
               <div
@@ -865,7 +786,7 @@ export const POSPage: React.FC = () => {
                         </td>
                         <td style={{ padding: '6px 8px', textAlign: 'center' }}>
                           <Button
-                            variant="primary"
+                            variant="default"
                             disabled={isOutOfStock}
                             onClick={() => addItem(p, 1, 'primary')}
                           >
@@ -954,18 +875,30 @@ export const POSPage: React.FC = () => {
           >
             {isMobile && (
               <Button
-                iconName="arrow-left"
+                variant="outline"
                 onClick={() => setMobileTab('catalog')}
               >
                 Back to Products Catalog
               </Button>
             )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ fontWeight: 'bold', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px', color: colors.textPrimary }}>
                 <ShoppingCart size={18} color="#0972d3" />
                 <span>Active Cart ({totals.itemCount} items)</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                {heldCarts.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => setIsHeldModalOpen(true)}>
+                    Held ({heldCarts.length})
+                  </Button>
+                )}
+                <Button
+                  variant="outline" size="sm"
+                  disabled={items.length === 0}
+                  onClick={() => holdCurrentCart('Parked bill')}
+                >
+                  Park
+                </Button>
                 {totals.itemCount > 0 && (
                   <>
                     <button
@@ -975,9 +908,9 @@ export const POSPage: React.FC = () => {
                       style={{
                         background: 'transparent',
                         border: `1px solid ${colors.border}`,
-                        borderRadius: '4px',
-                        padding: '2px 8px',
-                        fontSize: '11px',
+                        borderRadius: '6px',
+                        padding: '6px 10px',
+                        fontSize: '12px',
                         color: colors.textSecondary,
                         cursor: 'pointer',
                         display: 'flex',
@@ -997,57 +930,28 @@ export const POSPage: React.FC = () => {
                         e.currentTarget.style.background = 'transparent';
                       }}
                     >
-                      <Trash2 size={12} />
+                      <Trash2 size={14} />
                       <span>Clear</span>
                     </button>
-                    <Badge color="green">
-                      Total: <CurrencyText amount={totals.grandTotal} />
-                    </Badge>
                   </>
                 )}
               </div>
             </div>
 
             {/* Quick Customer Selector with Search Bar */}
-            <Select
-              selectedOption={
-                customer
-                  ? {
-                      label: customer.name,
-                      description: `${customer.phone} • ${customer.type.toUpperCase()}${customer.loyaltyPoints ? ` • ${customer.loyaltyPoints} pts` : ''}`,
-                      value: customer.id,
-                    }
-                  : {
-                      label: 'Walk-in Cash Customer',
-                      description: 'Standard retail counter checkout',
-                      value: 'cust-walkin',
-                    }
-              }
-              onChange={({ detail }) => {
-                const found = customers.find((c) => c.id === detail.selectedOption.value);
+            <select
+              value={customer ? customer.id : 'cust-walkin'}
+              onChange={(e) => {
+                const found = customers.find((c) => c.id === e.target.value);
                 setCustomer(found || null);
               }}
-              options={[
-                {
-                  label: 'Walk-in Cash Customer',
-                  description: 'Standard retail counter checkout',
-                  value: 'cust-walkin',
-                  tags: ['walkin', 'cash'],
-                },
-                ...customers
-                  .filter((c) => c.id !== 'cust-walkin')
-                  .map((c) => ({
-                    label: c.name,
-                    description: `${c.phone} • ${c.type.toUpperCase()}${c.loyaltyPoints ? ` • ${c.loyaltyPoints} pts` : ''}`,
-                    value: c.id,
-                    tags: [c.phone, c.email, c.companyName, c.address?.city].filter((t): t is string => Boolean(t)),
-                  })),
-              ]}
-              filteringType="auto"
-              filteringPlaceholder="Search customer by name, phone..."
-              placeholder="Search or Select Customer..."
-              empty="No customers found"
-            />
+              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="cust-walkin">Walk-in Cash Customer</option>
+              {customers.filter((c) => c.id !== 'cust-walkin').map((c) => (
+                <option key={c.id} value={c.id}>{c.name} - {c.phone}</option>
+              ))}
+            </select>
           </div>
 
           {/* Cart Line Items Scroll Area */}
@@ -1311,38 +1215,10 @@ export const POSPage: React.FC = () => {
             }}
           >
             {/* Totals Breakdown */}
-            <div style={{ fontSize: '13px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px', color: colors.textSecondary }}>
-                <span>Subtotal:</span>
-                <span><CurrencyText amount={totals.subtotal} /></span>
-              </div>
-              {totals.discountTotal > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px', color: '#16a34a' }}>
-                  <span>Discount:</span>
-                  <span>-<CurrencyText amount={totals.discountTotal} /></span>
-                </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', color: colors.textSecondary }}>
-                <span>Estimated Tax:</span>
-                <span><CurrencyText amount={totals.taxTotal} /></span>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                  borderTop: `1px dashed ${colors.border}`,
-                  paddingTop: '8px',
-                  fontWeight: 'bold',
-                  fontSize: '20px',
-                  color: colors.textPrimary,
-                }}
-              >
-                <span>TOTAL:</span>
-                <span style={{ color: isDark ? '#38bdf8' : '#0972d3' }}>
-                  <CurrencyText amount={totals.grandTotal} />
-                </span>
-              </div>
+            <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', color: colors.textSecondary, marginBottom: '2px', padding: '0 2px' }}>
+              <span>Subtotal: <CurrencyText amount={totals.subtotal} /></span>
+              {totals.discountTotal > 0 && <span style={{ color: '#16a34a' }}>Disc: -<CurrencyText amount={totals.discountTotal} /></span>}
+              <span>Tax: <CurrencyText amount={totals.taxTotal} /></span>
             </div>
 
             {/* Quick Cash Presets Bar (Speed Checkout) */}
@@ -1466,41 +1342,30 @@ export const POSPage: React.FC = () => {
       </div>
 
       {/* Payment Tender Modal */}
-      <Modal
-        visible={isPaymentModalOpen}
-        onDismiss={() => setIsPaymentModalOpen(false)}
-        header={`Payment Tender: ${formatMoney(totals.grandTotal, profile.currencySymbol)}`}
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setIsPaymentModalOpen(false)}>Cancel</Button>
-              <Button variant="primary" onClick={handleCompleteSale} iconName="check">
-                Complete Sale & Print Receipt
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        <SpaceBetween size="m">
-          <SegmentedControl
-            selectedId={paymentMethod}
-            onChange={({ detail }) => setPaymentMethod(detail.selectedId as any)}
-            options={[
-              { id: 'cash', text: '💵 Cash' },
-              { id: 'card', text: '💳 Card' },
-              { id: 'upi', text: '📱 Digital UPI / QR' },
-            ]}
-          />
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{`Payment Tender: ${formatMoney(totals.grandTotal, profile.currencySymbol)}`}</DialogTitle>
+          </DialogHeader>
+        <div className="flex flex-wrap gap-4">
+          <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
+  <TabsList className="grid w-full grid-cols-3">
+    <TabsTrigger value="cash">💵 Cash</TabsTrigger>
+    <TabsTrigger value="card">💳 Card</TabsTrigger>
+    <TabsTrigger value="upi">📱 Digital UPI / QR</TabsTrigger>
+  </TabsList>
+</Tabs>
 
           {paymentMethod === 'cash' && (
-            <SpaceBetween size="s">
-              <FormField label="Cash Received Amount">
+            <div className="flex flex-wrap gap-4">
+              <div className="flex flex-col gap-2 mt-4">
+<Label>Cash Received Amount</Label>
                 <Input
                   value={tenderedAmount}
-                  onChange={({ detail }) => setTenderedAmount(detail.value)}
+                  onChange={(e) => setTenderedAmount(e.target.value)}
                   type="number"
                 />
-              </FormField>
+              </div>
 
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <Button onClick={() => setTenderedAmount(totals.grandTotal.toFixed(2))}>
@@ -1544,58 +1409,62 @@ export const POSPage: React.FC = () => {
                     <CurrencyText amount={changeDue} />
                   </div>
                 </div>
-                {changeDue > 0 && <Badge color="green">Return Cash</Badge>}
+                {changeDue > 0 && <Badge variant="outline" className="bg-green-100 text-green-800">Return Cash</Badge>}
               </div>
-            </SpaceBetween>
+            </div>
           )}
 
           {paymentMethod === 'card' && (
-            <FormField label="Card Transaction Auth Slip Reference # (Optional)">
+            <div className="flex flex-col gap-2 mt-4">
+<Label>Card Transaction Auth Slip Reference # (Optional)</Label>
               <Input
                 value={paymentReference}
-                onChange={({ detail }) => setPaymentReference(detail.value)}
+                onChange={(e) => setPaymentReference(e.target.value)}
                 placeholder="e.g. VISA-AUTH-8812"
               />
-            </FormField>
+            </div>
           )}
 
           {paymentMethod === 'upi' && (
-            <SpaceBetween size="s">
-              <FormField label="UPI / QR Transaction Ref ID">
+            <div className="flex flex-wrap gap-4">
+              <div className="flex flex-col gap-2 mt-4">
+<Label>UPI / QR Transaction Ref ID</Label>
                 <Input
                   value={paymentReference}
-                  onChange={({ detail }) => setPaymentReference(detail.value)}
+                  onChange={(e) => setPaymentReference(e.target.value)}
                   placeholder="e.g. UPI-992144"
                 />
-              </FormField>
-              <Box textAlign="center" padding="m">
+              </div>
+              <div className="text-center p-4">
                 <div style={{ display: 'inline-block', padding: '12px', background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
                   <div style={{ fontWeight: 'bold', marginBottom: '6px', color: colors.textPrimary }}>Scan Shop UPI QR Code</div>
                   <div style={{ width: '130px', height: '130px', background: colors.bgSubtle, color: colors.textSecondary, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     [QR CODE]
                   </div>
                 </div>
-              </Box>
-            </SpaceBetween>
+              </div>
+            </div>
           )}
-        </SpaceBetween>
-      </Modal>
+        </div>
+      <DialogFooter>
+            <div className="flex justify-end mt-4 gap-2">
+              <Button variant="outline" onClick={() => setIsPaymentModalOpen(false)}>Cancel</Button>
+              <Button variant="default" onClick={handleCompleteSale}>Complete Sale & Print Receipt</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Held Bills Modal */}
-      <Modal
-        visible={isHeldModalOpen}
-        onDismiss={() => setIsHeldModalOpen(false)}
-        header={`Held Bills (${heldCarts.length})`}
-        footer={
-          <Box float="right">
-            <Button onClick={() => setIsHeldModalOpen(false)}>Close</Button>
-          </Box>
-        }
-      >
+      <Dialog open={isHeldModalOpen} onOpenChange={setIsHeldModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{`Held Bills (${heldCarts.length})`}</DialogTitle>
+          </DialogHeader>
         {heldCarts.length === 0 ? (
-          <Box textAlign="center" padding="m">No parked bills found.</Box>
+          <div className="text-center p-4">No parked bills found.</div>
         ) : (
-          <SpaceBetween size="s">
+          <div className="flex flex-wrap gap-4">
             {heldCarts.map((h) => (
               <div
                 key={h.id}
@@ -1620,9 +1489,9 @@ export const POSPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <SpaceBetween direction="horizontal" size="xs">
+                <div className="flex gap-2">
                   <Button
-                    variant="primary"
+                    variant="default"
                     onClick={() => {
                       recallHeldCart(h.id);
                       setIsHeldModalOpen(false);
@@ -1631,35 +1500,38 @@ export const POSPage: React.FC = () => {
                     Recall Bill
                   </Button>
                   <Button
-                    variant="icon"
-                    iconName="remove"
+                    variant="ghost" size="icon"
+                    
                     onClick={() => discardHeldCart(h.id)}
                   />
-                </SpaceBetween>
+                </div>
               </div>
             ))}
-          </SpaceBetween>
+          </div>
         )}
-      </Modal>
+      <DialogFooter>
+            <Button variant="outline" onClick={() => setIsHeldModalOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Printable Thermal Receipt Modal */}
-      <Modal
-        visible={!!completedInvoice}
-        onDismiss={() => setCompletedInvoice(null)}
-        header="Sale Complete - Receipt"
-        footer={
-          <Box float="right">
-            <Button onClick={() => setCompletedInvoice(null)}>Close</Button>
-          </Box>
-        }
-      >
+      <Dialog open={!!completedInvoice} onOpenChange={(o) => !o && setCompletedInvoice(null)}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Sale Complete - Receipt</DialogTitle>
+          </DialogHeader>
         {completedInvoice && (
           <PrintThermalReceipt
             invoice={completedInvoice}
             onClose={() => setCompletedInvoice(null)}
           />
         )}
-      </Modal>
+      <DialogFooter>
+            <Button variant="outline" onClick={() => setCompletedInvoice(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

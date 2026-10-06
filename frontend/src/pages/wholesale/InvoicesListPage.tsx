@@ -1,16 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import Header from '@cloudscape-design/components/header';
-import Table from '@cloudscape-design/components/table';
-import Box from '@cloudscape-design/components/box';
-import Button from '@cloudscape-design/components/button';
-import SpaceBetween from '@cloudscape-design/components/space-between';
-import Input from '@cloudscape-design/components/input';
-import Select from '@cloudscape-design/components/select';
-import Modal from '@cloudscape-design/components/modal';
-import FormField from '@cloudscape-design/components/form-field';
-import SegmentedControl from '@cloudscape-design/components/segmented-control';
-import Pagination from '@cloudscape-design/components/pagination';
-
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSalesStore } from '../../store/useSalesStore';
 import { useAppStore } from '../../store/useAppStore';
 import { Invoice } from '../../types/invoice';
@@ -18,6 +7,12 @@ import { CurrencyText } from '../../components/common/CurrencyText';
 import { InvoiceTypeBadge, PaymentStatusBadge } from '../../components/common/StatusBadge';
 import { PrintTaxInvoice } from '../../components/print/PrintTaxInvoice';
 import { PrintThermalReceipt } from '../../components/print/PrintThermalReceipt';
+
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../components/ui/dialog';
+import { Label } from '../../components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 
 export const InvoicesListPage: React.FC = () => {
   const profile = useAppStore((state) => state.profile);
@@ -103,308 +98,312 @@ export const InvoicesListPage: React.FC = () => {
   };
 
   return (
-    <SpaceBetween size="l">
-      {/* Header */}
-      <Header
-        variant="h1"
-        description="Unified ledger of all retail counter sales and wholesale commercial invoices."
-      >
-        📄 Invoices & Sales History
-      </Header>
-
-      {/* Filter Bar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '12px',
-          flexWrap: 'wrap',
-          background: isDark ? '#1e293b' : '#ffffff',
-          padding: '16px',
-          borderRadius: '8px',
-          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-        }}
-      >
-        <div style={{ flex: 1, minWidth: '240px' }}>
-          <Input
-            value={searchQuery}
-            onChange={({ detail }) => setSearchQuery(detail.value)}
-            placeholder="Search by Invoice # or Customer name..."
-            type="search"
-          />
-        </div>
-
-        <SegmentedControl
-          selectedId={channelFilter}
-          onChange={({ detail }) => setChannelFilter(detail.selectedId as any)}
-          options={[
-            { id: 'all', text: 'All Channels' },
-            { id: 'retail', text: '⚡ Retail POS' },
-            { id: 'wholesale', text: '📦 Wholesale B2B' },
-          ]}
-        />
-
-        <div style={{ width: '180px' }}>
-          <Select
-            selectedOption={{
-              label:
-                statusFilter === 'all'
-                  ? 'All Statuses'
-                  : statusFilter.toUpperCase(),
-              value: statusFilter,
-            }}
-            onChange={({ detail }) => setStatusFilter(detail.selectedOption.value as string)}
-            options={[
-              { label: 'All Statuses', value: 'all' },
-              { label: 'PAID', value: 'paid' },
-              { label: 'PARTIAL', value: 'partial' },
-              { label: 'UNPAID', value: 'unpaid' },
-            ]}
-          />
-        </div>
+    <div className="flex flex-col gap-6 max-w-7xl mx-auto pb-10">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">📄 Invoices & Sales History</h1>
+        <p className="text-muted-foreground mt-2">Unified ledger of all retail counter sales and wholesale commercial invoices.</p>
       </div>
 
-      {/* Invoices Table */}
-      <Table
-        columnDefinitions={[
-          {
-            id: 'invoiceNumber',
-            header: 'Invoice #',
-            cell: (inv) => <span style={{ fontWeight: 600 }}>{inv.invoiceNumber}</span>,
-          },
-          {
-            id: 'channel',
-            header: 'Channel',
-            cell: (inv) => <InvoiceTypeBadge type={inv.type} />,
-          },
-          {
-            id: 'customer',
-            header: 'Customer',
-            cell: (inv) => (
-              <div>
-                <div style={{ fontWeight: 500 }}>{inv.customerName}</div>
-                {inv.customerPhone && (
-                  <div style={{ fontSize: '11px', color: '#6b7280' }}>{inv.customerPhone}</div>
-                )}
-              </div>
-            ),
-          },
-          {
-            id: 'date',
-            header: 'Date',
-            cell: (inv) => (
-              <div>
-                <div>{inv.date}</div>
-                {inv.dueDate && (
-                  <div style={{ fontSize: '11px', color: '#dc2626' }}>Due: {inv.dueDate}</div>
-                )}
-              </div>
-            ),
-          },
-          {
-            id: 'items',
-            header: 'Items',
-            cell: (inv) => `${inv.items.length} line(s)`,
-          },
-          {
-            id: 'grandTotal',
-            header: 'Total Amount',
-            cell: (inv) => (
-              <span style={{ fontWeight: 'bold' }}>
-                <CurrencyText amount={inv.grandTotal} />
-              </span>
-            ),
-          },
-          {
-            id: 'paidDue',
-            header: 'Paid / Due',
-            cell: (inv) => (
-              <div style={{ fontSize: '12px' }}>
-                <div>Paid: <CurrencyText amount={inv.paidAmount} /></div>
-                {inv.dueAmount > 0 && (
-                  <div style={{ color: '#dc2626', fontWeight: 600 }}>
-                    Due: <CurrencyText amount={inv.dueAmount} />
-                  </div>
-                )}
-              </div>
-            ),
-          },
-          {
-            id: 'status',
-            header: 'Payment Status',
-            cell: (inv) => <PaymentStatusBadge status={inv.paymentStatus} />,
-          },
-          {
-            id: 'actions',
-            header: 'Actions',
-            cell: (inv) => (
-              <SpaceBetween direction="horizontal" size="xs">
-                <Button
-                  variant="inline-link"
-                  onClick={() => setActiveInvoice(inv)}
-                >
-                  View / Print
-                </Button>
-                {inv.dueAmount > 0 && (
-                  <Button
-                    variant="inline-link"
-                    onClick={() => {
-                      setPaymentModalInvoice(inv);
-                      setPaymentAmount(inv.dueAmount.toString());
-                    }}
-                  >
-                    Receive Pay
-                  </Button>
-                )}
-                {inv.status !== 'returned' && (
-                  <Button
-                    variant="inline-link"
-                    onClick={() => setReturnModalInvoice(inv)}
-                  >
-                    Return
-                  </Button>
-                )}
-              </SpaceBetween>
-            ),
-          },
-        ]}
-        items={paginatedInvoices}
-        pagination={
-          <Pagination
-            currentPageIndex={currentPage}
-            pagesCount={totalPages}
-            onChange={({ detail }) => setCurrentPage(detail.currentPageIndex)}
-          />
-        }
-        empty={<Box textAlign="center" padding="l">No invoices match selected criteria.</Box>}
-      />
-
-      {/* Invoice View / Print Modal */}
-      <Modal
-        visible={!!activeInvoice}
-        onDismiss={() => setActiveInvoice(null)}
-        header={`Invoice #${activeInvoice?.invoiceNumber}`}
-        size={activeInvoice?.type === 'wholesale' ? 'large' : 'medium'}
-        footer={
-          <Box float="right">
-            <Button onClick={() => setActiveInvoice(null)}>Close</Button>
-          </Box>
-        }
-      >
-        {activeInvoice && (
-          activeInvoice.type === 'wholesale' ? (
-            <PrintTaxInvoice invoice={activeInvoice} onClose={() => setActiveInvoice(null)} />
-          ) : (
-            <PrintThermalReceipt invoice={activeInvoice} onClose={() => setActiveInvoice(null)} />
-          )
-        )}
-      </Modal>
-
-      {/* Record Payment Modal */}
-      <Modal
-        visible={!!paymentModalInvoice}
-        onDismiss={() => setPaymentModalInvoice(null)}
-        header={`Record Payment for #${paymentModalInvoice?.invoiceNumber}`}
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setPaymentModalInvoice(null)}>Cancel</Button>
-              <Button variant="primary" onClick={handleRecordPaymentSubmit}>
-                Confirm Payment Receipt
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        {paymentModalInvoice && (
-          <SpaceBetween size="m">
-            <div>
-              <strong>Customer:</strong> {paymentModalInvoice.customerName} |{' '}
-              <strong>Balance Due:</strong>{' '}
-              <span style={{ color: '#dc2626', fontWeight: 'bold' }}>
-                <CurrencyText amount={paymentModalInvoice.dueAmount} />
-              </span>
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by Invoice # or Customer name..."
+                type="search"
+                className="pl-9"
+              />
             </div>
 
-            <FormField label="Payment Amount Received">
-              <Input
-                value={paymentAmount}
-                onChange={({ detail }) => setPaymentAmount(detail.value)}
-                type="number"
-              />
-            </FormField>
+            <div className="flex items-center rounded-md border border-input p-1 bg-muted/50">
+              <button
+                onClick={() => setChannelFilter('all')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-sm transition-colors ${channelFilter === 'all' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                All Channels
+              </button>
+              <button
+                onClick={() => setChannelFilter('retail')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-sm transition-colors ${channelFilter === 'retail' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                ⚡ Retail POS
+              </button>
+              <button
+                onClick={() => setChannelFilter('wholesale')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-sm transition-colors ${channelFilter === 'wholesale' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                📦 Wholesale B2B
+              </button>
+            </div>
 
-            <FormField label="Payment Channel / Method">
-              <Select
-                selectedOption={{ label: paymentMethod.toUpperCase(), value: paymentMethod }}
-                onChange={({ detail }) => setPaymentMethod(detail.selectedOption.value as any)}
-                options={[
-                  { label: 'BANK TRANSFER / WIRE', value: 'bank_transfer' },
-                  { label: 'CASH', value: 'cash' },
-                  { label: 'CARD / POS SLIP', value: 'card' },
-                  { label: 'UPI / DIGITAL', value: 'upi' },
-                ]}
-              />
-            </FormField>
+            <div className="w-[180px]">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="all">All Statuses</option>
+                <option value="paid">PAID</option>
+                <option value="partial">PARTIAL</option>
+                <option value="unpaid">UNPAID</option>
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            <FormField label="Bank Reference # / Cheque No.">
-              <Input
-                value={paymentReference}
-                onChange={({ detail }) => setPaymentReference(detail.value)}
-                placeholder="e.g. WIRE-998822 or CHQ-0012"
-              />
-            </FormField>
-          </SpaceBetween>
-        )}
-      </Modal>
-
-      {/* Sales Return Modal */}
-      <Modal
-        visible={!!returnModalInvoice}
-        onDismiss={() => setReturnModalInvoice(null)}
-        header={`Confirm Sales Return for #${returnModalInvoice?.invoiceNumber}`}
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setReturnModalInvoice(null)}>Cancel</Button>
-              <Button variant="primary" onClick={handleReturnSubmit}>
-                Process Return & Restock Goods
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        {returnModalInvoice && (
-          <SpaceBetween size="m">
-            <Box color="text-body-secondary">
-              Processing this return will restock all {returnModalInvoice.items.length} line items back into product inventory.
-            </Box>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ borderBottom: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`, textAlign: 'left' }}>
-                  <th style={{ padding: '6px' }}>Item</th>
-                  <th style={{ padding: '6px', textAlign: 'center' }}>Qty Restocked</th>
-                  <th style={{ padding: '6px', textAlign: 'right' }}>Total</th>
+      <Card>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs uppercase bg-muted/50 text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 font-medium">Invoice #</th>
+                <th className="px-4 py-3 font-medium">Channel</th>
+                <th className="px-4 py-3 font-medium">Customer</th>
+                <th className="px-4 py-3 font-medium">Date</th>
+                <th className="px-4 py-3 font-medium">Items</th>
+                <th className="px-4 py-3 font-medium">Total Amount</th>
+                <th className="px-4 py-3 font-medium">Paid / Due</th>
+                <th className="px-4 py-3 font-medium">Payment Status</th>
+                <th className="px-4 py-3 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {paginatedInvoices.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
+                    No invoices match selected criteria.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {returnModalInvoice.items.map((i) => (
-                  <tr key={i.id} style={{ borderBottom: `1px solid ${isDark ? '#1e293b' : '#f3f4f6'}` }}>
-                    <td style={{ padding: '6px' }}>{i.productName}</td>
-                    <td style={{ padding: '6px', textAlign: 'center', fontWeight: 'bold' }}>
-                      {i.quantity} ({i.unitName})
+              ) : (
+                paginatedInvoices.map((inv) => (
+                  <tr key={inv.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3 font-semibold">{inv.invoiceNumber}</td>
+                    <td className="px-4 py-3">
+                      <InvoiceTypeBadge type={inv.type} />
                     </td>
-                    <td style={{ padding: '6px', textAlign: 'right' }}>
-                      <CurrencyText amount={i.total} />
+                    <td className="px-4 py-3">
+                      <div className="font-medium">{inv.customerName}</div>
+                      {inv.customerPhone && (
+                        <div className="text-xs text-muted-foreground">{inv.customerPhone}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>{inv.date}</div>
+                      {inv.dueDate && (
+                        <div className="text-xs text-destructive">Due: {inv.dueDate}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">{inv.items.length} line(s)</td>
+                    <td className="px-4 py-3 font-bold">
+                      <CurrencyText amount={inv.grandTotal} />
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      <div>Paid: <CurrencyText amount={inv.paidAmount} /></div>
+                      {inv.dueAmount > 0 && (
+                        <div className="text-destructive font-semibold">
+                          Due: <CurrencyText amount={inv.dueAmount} />
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <PaymentStatusBadge status={inv.paymentStatus} />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setActiveInvoice(inv)}
+                        >
+                          View / Print
+                        </Button>
+                        {inv.dueAmount > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setPaymentModalInvoice(inv);
+                              setPaymentAmount(inv.dueAmount.toString());
+                            }}
+                          >
+                            Receive Pay
+                          </Button>
+                        )}
+                        {inv.status !== 'returned' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setReturnModalInvoice(inv)}
+                          >
+                            Return
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </SpaceBetween>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t">
+            <div className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         )}
-      </Modal>
-    </SpaceBetween>
+      </Card>
+
+      {/* Invoice View / Print Modal */}
+      <Dialog open={!!activeInvoice} onOpenChange={(open) => !open && setActiveInvoice(null)}>
+        <DialogContent className={activeInvoice?.type === 'wholesale' ? 'max-w-4xl' : 'max-w-md'}>
+          <DialogHeader>
+            <DialogTitle>Invoice #{activeInvoice?.invoiceNumber}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {activeInvoice && (
+              activeInvoice.type === 'wholesale' ? (
+                <PrintTaxInvoice invoice={activeInvoice} onClose={() => setActiveInvoice(null)} />
+              ) : (
+                <PrintThermalReceipt invoice={activeInvoice} onClose={() => setActiveInvoice(null)} />
+              )
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setActiveInvoice(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Record Payment Modal */}
+      <Dialog open={!!paymentModalInvoice} onOpenChange={(open) => !open && setPaymentModalInvoice(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Record Payment for #{paymentModalInvoice?.invoiceNumber}</DialogTitle>
+          </DialogHeader>
+          
+          {paymentModalInvoice && (
+            <div className="grid gap-4 py-4">
+              <div className="text-sm">
+                <strong>Customer:</strong> {paymentModalInvoice.customerName} |{' '}
+                <strong>Balance Due:</strong>{' '}
+                <span className="text-destructive font-bold">
+                  <CurrencyText amount={paymentModalInvoice.dueAmount} />
+                </span>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="payment-amount">Payment Amount Received</Label>
+                <Input
+                  id="payment-amount"
+                  type="number"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="payment-method">Payment Channel / Method</Label>
+                <select
+                  id="payment-method"
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value as any)}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="bank_transfer">BANK TRANSFER / WIRE</option>
+                  <option value="cash">CASH</option>
+                  <option value="card">CARD / POS SLIP</option>
+                  <option value="upi">UPI / DIGITAL</option>
+                </select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="payment-reference">Bank Reference # / Cheque No.</Label>
+                <Input
+                  id="payment-reference"
+                  value={paymentReference}
+                  onChange={(e) => setPaymentReference(e.target.value)}
+                  placeholder="e.g. WIRE-998822 or CHQ-0012"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPaymentModalInvoice(null)}>Cancel</Button>
+            <Button onClick={handleRecordPaymentSubmit}>Confirm Payment Receipt</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sales Return Modal */}
+      <Dialog open={!!returnModalInvoice} onOpenChange={(open) => !open && setReturnModalInvoice(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Confirm Sales Return for #{returnModalInvoice?.invoiceNumber}</DialogTitle>
+            <DialogDescription>
+              Processing this return will restock all {returnModalInvoice?.items.length} line items back into product inventory.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {returnModalInvoice && (
+            <div className="py-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left">
+                    <th className="pb-2 font-medium">Item</th>
+                    <th className="pb-2 font-medium text-center">Qty Restocked</th>
+                    <th className="pb-2 font-medium text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {returnModalInvoice.items.map((i) => (
+                    <tr key={i.id}>
+                      <td className="py-2">{i.productName}</td>
+                      <td className="py-2 text-center font-bold">
+                        {i.quantity} ({i.unitName})
+                      </td>
+                      <td className="py-2 text-right">
+                        <CurrencyText amount={i.total} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReturnModalInvoice(null)}>Cancel</Button>
+            <Button onClick={handleReturnSubmit}>Process Return & Restock Goods</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };

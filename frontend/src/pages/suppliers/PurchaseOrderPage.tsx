@@ -1,21 +1,27 @@
 import React, { useState } from 'react';
-import Header from '@cloudscape-design/components/header';
-import Table from '@cloudscape-design/components/table';
-import Box from '@cloudscape-design/components/box';
-import Button from '@cloudscape-design/components/button';
-import SpaceBetween from '@cloudscape-design/components/space-between';
-import Modal from '@cloudscape-design/components/modal';
-import FormField from '@cloudscape-design/components/form-field';
-import Select from '@cloudscape-design/components/select';
-import Input from '@cloudscape-design/components/input';
-import Grid from '@cloudscape-design/components/grid';
-import Badge from '@cloudscape-design/components/badge';
+import { Plus, Download, X } from 'lucide-react';
 
 import { usePurchaseStore } from '../../store/usePurchaseStore';
 import { useProductStore } from '../../store/useProductStore';
 import { useAppStore } from '../../store/useAppStore';
 import { CurrencyText } from '../../components/common/CurrencyText';
 import { PurchaseOrder, PurchaseOrderItem } from '../../types/purchase';
+
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Label } from '../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Badge } from '../../components/ui/badge';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '../../components/ui/table';
+import { Card, CardContent } from '../../components/ui/card';
 
 export const PurchaseOrderPage: React.FC = () => {
   const profile = useAppStore((state) => state.profile);
@@ -120,232 +126,213 @@ export const PurchaseOrderPage: React.FC = () => {
   };
 
   return (
-    <SpaceBetween size="l">
+    <div className="flex flex-col gap-6 p-4">
       {/* Header */}
-      <Header
-        variant="h1"
-        description="Procure stock from manufacturers and suppliers, log inward shipments, and update inventory counts."
-        actions={
-          <Button variant="primary" iconName="add-plus" onClick={() => setIsCreateModalOpen(true)}>
-            Create Purchase Order
-          </Button>
-        }
-      >
-        📋 Purchase Orders & Goods Inwarding
-      </Header>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">📋 Purchase Orders & Goods Inwarding</h1>
+          <p className="text-muted-foreground mt-2">
+            Procure stock from manufacturers and suppliers, log inward shipments, and update inventory counts.
+          </p>
+        </div>
+        <Button onClick={() => setIsCreateModalOpen(true)} className="shrink-0 gap-2">
+          <Plus className="w-4 h-4" />
+          Create Purchase Order
+        </Button>
+      </div>
 
       {/* PO Table */}
-      <Table
-        columnDefinitions={[
-          {
-            id: 'poNumber',
-            header: 'PO #',
-            cell: (po) => <span style={{ fontWeight: 600 }}>{po.poNumber}</span>,
-          },
-          {
-            id: 'supplier',
-            header: 'Supplier',
-            cell: (po) => po.supplierName,
-          },
-          {
-            id: 'date',
-            header: 'Order Date',
-            cell: (po) => po.orderDate,
-          },
-          {
-            id: 'items',
-            header: 'Items',
-            cell: (po) => `${po.items.length} item line(s)`,
-          },
-          {
-            id: 'grandTotal',
-            header: 'Order Total',
-            cell: (po) => (
-              <span style={{ fontWeight: 'bold' }}>
-                <CurrencyText amount={po.grandTotal} />
-              </span>
-            ),
-          },
-          {
-            id: 'status',
-            header: 'Shipment Status',
-            cell: (po) => (
-              <Badge color={po.status === 'received' ? 'green' : 'blue'}>
-                {po.status === 'received' ? 'RECEIVED & INWARDED' : 'ORDERED / IN TRANSIT'}
-              </Badge>
-            ),
-          },
-          {
-            id: 'payment',
-            header: 'Payment Status',
-            cell: (po) => (
-              <Badge color={po.paymentStatus === 'paid' ? 'green' : 'grey'}>
-                {po.paymentStatus.toUpperCase()}
-              </Badge>
-            ),
-          },
-          {
-            id: 'actions',
-            header: 'Actions',
-            cell: (po) => (
-              <div>
-                {po.status === 'ordered' && (
-                  <Button
-                    variant="inline-link"
-                    iconName="upload"
-                    onClick={() => handleReceiveGoods(po)}
-                  >
-                    Receive Stock
-                  </Button>
-                )}
-              </div>
-            ),
-          },
-        ]}
-        items={purchaseOrders}
-        empty={<Box textAlign="center" padding="l">No purchase orders found.</Box>}
-      />
+      <Card>
+        <div className="rounded-md border overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>PO #</TableHead>
+                <TableHead>Supplier</TableHead>
+                <TableHead>Order Date</TableHead>
+                <TableHead>Items</TableHead>
+                <TableHead>Order Total</TableHead>
+                <TableHead>Shipment Status</TableHead>
+                <TableHead>Payment Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {purchaseOrders.length > 0 ? (
+                purchaseOrders.map((po) => (
+                  <TableRow key={po.id}>
+                    <TableCell className="font-semibold">{po.poNumber}</TableCell>
+                    <TableCell>{po.supplierName}</TableCell>
+                    <TableCell>{po.orderDate}</TableCell>
+                    <TableCell>{po.items.length} item line(s)</TableCell>
+                    <TableCell className="font-bold">
+                      <CurrencyText amount={po.grandTotal} />
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={po.status === 'received' ? 'default' : 'secondary'} className={po.status === 'received' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'}>
+                        {po.status === 'received' ? 'RECEIVED & INWARDED' : 'ORDERED / IN TRANSIT'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={po.paymentStatus === 'paid' ? 'border-green-600 text-green-600' : 'border-slate-300 text-slate-500'}>
+                        {po.paymentStatus.toUpperCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {po.status === 'ordered' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleReceiveGoods(po)}
+                          className="gap-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:text-blue-400"
+                        >
+                          <Download className="w-4 h-4" />
+                          Receive Stock
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                    No purchase orders found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
 
       {/* Create PO Modal */}
-      <Modal
-        visible={isCreateModalOpen}
-        onDismiss={() => setIsCreateModalOpen(false)}
-        header="Create Supplier Purchase Order"
-        size="large"
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
-              <Button variant="primary" onClick={handleCreateSubmit}>
-                Issue Purchase Order
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        <SpaceBetween size="m">
-          <FormField label="Select Supplier / Manufacturer">
-            <Select
-              selectedOption={
-                activeSupplier
-                  ? { label: activeSupplier.name, value: activeSupplier.id }
-                  : null
-              }
-              onChange={({ detail }) => setSelectedSupplierId(detail.selectedOption.value as string)}
-              options={suppliers.map((s) => ({
-                label: s.name,
-                value: s.id,
-              }))}
-            />
-          </FormField>
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Supplier Purchase Order</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="grid gap-2">
+              <Label>Select Supplier / Manufacturer</Label>
+              <Select value={selectedSupplierId} onValueChange={(v) => setSelectedSupplierId(v || '')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a supplier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <strong>Procurement Line Items</strong>
-            <Button iconName="add-plus" onClick={handleAddItem}>
-              Add Product
-            </Button>
-          </div>
-
-          <SpaceBetween size="xs">
-            {poItems.map((item, idx) => (
-              <div
-                key={idx}
-                style={{
-                  border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-                  borderRadius: '6px',
-                  padding: '10px',
-                  background: isDark ? '#0f172a' : '#f8fafc',
-                }}
-              >
-                <Grid
-                  gridDefinition={[
-                    { colspan: { default: 12, s: 6, m: 4 } },
-                    { colspan: { default: 6, s: 3, m: 2 } },
-                    { colspan: { default: 6, s: 3, m: 2 } },
-                    { colspan: { default: 8, s: 9, m: 3 } },
-                    { colspan: { default: 4, s: 3, m: 1 } },
-                  ]}
-                >
-                  <FormField label="Product">
-                    <Select
-                      selectedOption={{ label: item.productName, value: item.productId }}
-                      onChange={({ detail }) => {
-                        const selectedProd = products.find((p) => p.id === detail.selectedOption.value);
-                        if (selectedProd) {
-                          handleUpdateItem(idx, {
-                            productId: selectedProd.id,
-                            productName: selectedProd.name,
-                            sku: selectedProd.sku,
-                            unit: selectedProd.primaryUnit,
-                            unitCost: selectedProd.costPrice,
-                            taxRate: selectedProd.taxRate,
-                          });
-                        }
-                      }}
-                      options={products.map((p) => ({
-                        label: p.name,
-                        value: p.id,
-                      }))}
-                    />
-                  </FormField>
-
-                  <FormField label={`Quantity (${item.unit})`}>
-                    <Input
-                      value={item.quantity.toString()}
-                      type="number"
-                      onChange={({ detail }) =>
-                        handleUpdateItem(idx, { quantity: parseInt(detail.value) || 1 })
-                      }
-                    />
-                  </FormField>
-
-                  <FormField label="Unit Cost">
-                    <Input
-                      value={item.unitCost.toString()}
-                      type="number"
-                      onChange={({ detail }) =>
-                        handleUpdateItem(idx, { unitCost: parseFloat(detail.value) || 0 })
-                      }
-                    />
-                  </FormField>
-
-                  <FormField label="Line Total">
-                    <div style={{ paddingTop: '8px', fontWeight: 'bold' }}>
-                      <CurrencyText amount={item.total} />
-                    </div>
-                  </FormField>
-
-                  <div style={{ display: 'flex', alignItems: 'center', paddingTop: '24px' }}>
-                    <Button
-                      variant="inline-icon"
-                      iconName="close"
-                      disabled={poItems.length === 1}
-                      onClick={() => handleRemoveItem(idx)}
-                    />
-                  </div>
-                </Grid>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <strong className="text-sm font-semibold">Procurement Line Items</strong>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddItem} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Product
+                </Button>
               </div>
-            ))}
-          </SpaceBetween>
 
-          <div
-            style={{
-              background: isDark ? '#1e293b' : '#ffffff',
-              padding: '12px',
-              borderRadius: '6px',
-              border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <span>Estimated Grand Total (Tax Incl.):</span>
-            <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#0972d3' }}>
-              <CurrencyText amount={poGrandTotal} />
-            </span>
+              <div className="space-y-3">
+                {poItems.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800"
+                  >
+                    <div className="sm:col-span-5 grid gap-2">
+                      <Label className="text-xs">Product</Label>
+                      <Select
+                        value={item.productId}
+                        onValueChange={(val) => {
+                          const selectedProd = products.find((p) => p.id === val);
+                          if (selectedProd) {
+                            handleUpdateItem(idx, {
+                              productId: selectedProd.id,
+                              productName: selectedProd.name,
+                              sku: selectedProd.sku,
+                              unit: selectedProd.primaryUnit,
+                              unitCost: selectedProd.costPrice,
+                              taxRate: selectedProd.taxRate,
+                            });
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="sm:col-span-2 grid gap-2">
+                      <Label className="text-xs">Quantity ({item.unit})</Label>
+                      <Input
+                        value={item.quantity.toString()}
+                        type="number"
+                        onChange={(e) =>
+                          handleUpdateItem(idx, { quantity: parseInt(e.target.value) || 1 })
+                        }
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2 grid gap-2">
+                      <Label className="text-xs">Unit Cost</Label>
+                      <Input
+                        value={item.unitCost.toString()}
+                        type="number"
+                        onChange={(e) =>
+                          handleUpdateItem(idx, { unitCost: parseFloat(e.target.value) || 0 })
+                        }
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2 grid gap-2 pb-2">
+                      <Label className="text-xs text-muted-foreground">Line Total</Label>
+                      <div className="font-bold">
+                        <CurrencyText amount={item.total} />
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-1 flex justify-end pb-1.5">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={poItems.length === 1}
+                        onClick={() => handleRemoveItem(idx)}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-white dark:bg-slate-950 p-4 rounded-lg border border-slate-200 dark:border-slate-800 flex justify-between items-center shadow-sm mt-4">
+                <span className="font-medium">Estimated Grand Total (Tax Incl.):</span>
+                <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                  <CurrencyText amount={poGrandTotal} />
+                </span>
+              </div>
+            </div>
           </div>
-        </SpaceBetween>
-      </Modal>
-    </SpaceBetween>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateSubmit}>Issue Purchase Order</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };

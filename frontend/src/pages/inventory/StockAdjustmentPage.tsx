@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
-import Header from '@cloudscape-design/components/header';
-import Container from '@cloudscape-design/components/container';
-import Grid from '@cloudscape-design/components/grid';
-import FormField from '@cloudscape-design/components/form-field';
-import Select from '@cloudscape-design/components/select';
-import Input from '@cloudscape-design/components/input';
-import Button from '@cloudscape-design/components/button';
-import SpaceBetween from '@cloudscape-design/components/space-between';
-import Alert from '@cloudscape-design/components/alert';
-import Box from '@cloudscape-design/components/box';
+import { Check } from 'lucide-react';
 
 import { useProductStore } from '../../store/useProductStore';
 import { useAppStore } from '../../store/useAppStore';
+
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
 
 interface AdjustmentHistoryRecord {
   id: string;
@@ -91,171 +88,158 @@ export const StockAdjustmentPage: React.FC = () => {
   };
 
   return (
-    <SpaceBetween size="l">
-      <Header
-        variant="h1"
-        description="Reconcile inventory audits, write off damaged or expired stock, and log audit trails."
-      >
-        ⚖️ Stock Adjustments & Audit Log
-      </Header>
+    <div className="flex flex-col gap-6 p-4">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">⚖️ Stock Adjustments & Audit Log</h1>
+        <p className="text-muted-foreground mt-2">
+          Reconcile inventory audits, write off damaged or expired stock, and log audit trails.
+        </p>
+      </div>
 
-      <Grid
-        gridDefinition={[
-          { colspan: { default: 12, m: 5 } },
-          { colspan: { default: 12, m: 7 } },
-        ]}
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Adjustment Form */}
-        <Container
-          header={
-            <Header variant="h2" description="Enter physical inventory change details">
-              Create Stock Adjustment
-            </Header>
-          }
-        >
-          <SpaceBetween size="m">
-            <FormField label="Target Product">
-              <Select
-                selectedOption={
-                  activeProduct
-                    ? {
-                        label: activeProduct.name,
-                        value: activeProduct.id,
-                        description: `Current Stock: ${activeProduct.stockQuantity} ${activeProduct.primaryUnit}s`,
-                      }
-                    : null
-                }
-                onChange={({ detail }) => setSelectedProductId(detail.selectedOption.value as string)}
-                options={products.map((p) => ({
-                  label: p.name,
-                  value: p.id,
-                  description: `Current: ${p.stockQuantity} ${p.primaryUnit}s • SKU: ${p.sku}`,
-                }))}
-              />
-            </FormField>
-
-            <FormField label="Adjustment Action">
-              <Select
-                selectedOption={{
-                  label:
-                    adjustmentType === 'deduct'
-                      ? '🔻 Write-Off / Deduct Stock'
-                      : '🔼 Add Found Stock',
-                  value: adjustmentType,
-                }}
-                onChange={({ detail }) => setAdjustmentType(detail.selectedOption.value as any)}
-                options={[
-                  { label: '🔻 Write-Off / Deduct Stock', value: 'deduct' },
-                  { label: '🔼 Add Found Stock', value: 'add' },
-                ]}
-              />
-            </FormField>
-
-            <FormField label="Reason Category">
-              <Select
-                selectedOption={{ label: reasonCategory, value: reasonCategory }}
-                onChange={({ detail }) => setReasonCategory(detail.selectedOption.value as string)}
-                options={[
-                  { label: 'Damaged in transit / Unloading', value: 'Damaged in transit / Unloading' },
-                  { label: 'Expired batch write-off', value: 'Expired batch write-off' },
-                  { label: 'Physical count discrepancy (Audit)', value: 'Physical count discrepancy (Audit)' },
-                  { label: 'Store usage / Sample display', value: 'Store usage / Sample display' },
-                  { label: 'Theft / Shrinkage loss', value: 'Theft / Shrinkage loss' },
-                ]}
-              />
-            </FormField>
-
-            <FormField label={`Quantity in ${activeProduct?.primaryUnit || 'Units'}`}>
-              <Input
-                value={quantity}
-                type="number"
-                onChange={({ detail }) => setQuantity(detail.value)}
-              />
-            </FormField>
-
-            <FormField label="Specific Audit Notes (Optional)">
-              <Input
-                value={notes}
-                onChange={({ detail }) => setNotes(detail.value)}
-                placeholder="e.g. Discovered dented cans in aisle 3 pallet"
-              />
-            </FormField>
-
-            {activeProduct && (
-              <div
-                style={{
-                  background: isDark ? '#0f172a' : '#f8fafc',
-                  padding: '12px',
-                  borderRadius: '6px',
-                  border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-                  fontSize: '13px',
-                }}
-              >
-                <div>Current Stock: <strong>{activeProduct.stockQuantity}</strong> {activeProduct.primaryUnit}s</div>
-                <div>
-                  Projected Stock After Adjustment:{' '}
-                  <strong style={{ color: adjustmentType === 'deduct' ? '#dc2626' : '#16a34a' }}>
-                    {Math.max(
-                      0,
-                      activeProduct.stockQuantity +
-                        (adjustmentType === 'add' ? parseInt(quantity) || 0 : -(parseInt(quantity) || 0))
-                    )}
-                  </strong>{' '}
-                  {activeProduct.primaryUnit}s
+        <div className="lg:col-span-5">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create Stock Adjustment</CardTitle>
+              <CardDescription>Enter physical inventory change details</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4">
+                <div className="grid gap-2">
+                  <Label>Target Product</Label>
+                  <Select value={selectedProductId} onValueChange={(v) => setSelectedProductId(v || '')}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a product" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} (Current: {p.stockQuantity} {p.primaryUnit}s)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-            )}
 
-            <Button variant="primary" fullWidth onClick={handleSubmit} iconName="check">
-              Apply Stock Adjustment
-            </Button>
-          </SpaceBetween>
-        </Container>
+                <div className="grid gap-2">
+                  <Label>Adjustment Action</Label>
+                  <Select value={adjustmentType} onValueChange={(v) => setAdjustmentType(v as 'deduct' | 'add')}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="deduct">🔻 Write-Off / Deduct Stock</SelectItem>
+                      <SelectItem value="add">🔼 Add Found Stock</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Reason Category</Label>
+                  <Select value={reasonCategory} onValueChange={(v) => setReasonCategory(v || '')}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Damaged in transit / Unloading">Damaged in transit / Unloading</SelectItem>
+                      <SelectItem value="Expired batch write-off">Expired batch write-off</SelectItem>
+                      <SelectItem value="Physical count discrepancy (Audit)">Physical count discrepancy (Audit)</SelectItem>
+                      <SelectItem value="Store usage / Sample display">Store usage / Sample display</SelectItem>
+                      <SelectItem value="Theft / Shrinkage loss">Theft / Shrinkage loss</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Quantity in {activeProduct?.primaryUnit || 'Units'}</Label>
+                  <Input
+                    value={quantity}
+                    type="number"
+                    onChange={(e) => setQuantity(e.target.value)}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Specific Audit Notes (Optional)</Label>
+                  <Input
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="e.g. Discovered dented cans in aisle 3 pallet"
+                  />
+                </div>
+
+                {activeProduct && (
+                  <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-md border border-slate-200 dark:border-slate-800 text-sm">
+                    <div>Current Stock: <strong className="font-semibold">{activeProduct.stockQuantity}</strong> {activeProduct.primaryUnit}s</div>
+                    <div className="mt-1">
+                      Projected Stock After Adjustment:{' '}
+                      <strong className={adjustmentType === 'deduct' ? 'text-red-600 dark:text-red-400 font-bold' : 'text-green-600 dark:text-green-400 font-bold'}>
+                        {Math.max(
+                          0,
+                          activeProduct.stockQuantity +
+                            (adjustmentType === 'add' ? parseInt(quantity) || 0 : -(parseInt(quantity) || 0))
+                        )}
+                      </strong>{' '}
+                      {activeProduct.primaryUnit}s
+                    </div>
+                  </div>
+                )}
+
+                <Button className="w-full mt-2 gap-2" onClick={handleSubmit}>
+                  <Check className="w-4 h-4" />
+                  Apply Stock Adjustment
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Audit Log Table */}
-        <Container
-          header={
-            <Header variant="h2" description="Recent stock reconciliation entries">
-              Recent Adjustment Audit History
-            </Header>
-          }
-        >
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ textAlign: 'left', borderBottom: `2px solid ${isDark ? '#334155' : '#e2e8f0'}`, color: isDark ? '#94a3b8' : '#64748b' }}>
-                <th style={{ padding: '8px' }}>Timestamp</th>
-                <th style={{ padding: '8px' }}>Product</th>
-                <th style={{ padding: '8px', textAlign: 'center' }}>Adjustment</th>
-                <th style={{ padding: '8px' }}>Reason</th>
-                <th style={{ padding: '8px' }}>Author</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((record) => (
-                <tr key={record.id} style={{ borderBottom: `1px solid ${isDark ? '#1e293b' : '#f1f5f9'}` }}>
-                  <td style={{ padding: '8px', fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }}>{record.date}</td>
-                  <td style={{ padding: '8px' }}>
-                    <div style={{ fontWeight: 600 }}>{record.productName}</div>
-                    <div style={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#6b7280' }}>{record.sku}</div>
-                  </td>
-                  <td
-                    style={{
-                      padding: '8px',
-                      textAlign: 'center',
-                      fontWeight: 'bold',
-                      color: record.deltaQuantity > 0 ? '#16a34a' : '#dc2626',
-                    }}
-                  >
-                    {record.deltaQuantity > 0 ? `+${record.deltaQuantity}` : record.deltaQuantity}
-                  </td>
-                  <td style={{ padding: '8px', fontSize: '12px' }}>{record.reason}</td>
-                  <td style={{ padding: '8px', fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }}>{record.author}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Container>
-      </Grid>
-    </SpaceBetween>
+        <div className="lg:col-span-7">
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>Recent Adjustment Audit History</CardTitle>
+              <CardDescription>Recent stock reconciliation entries</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50 text-muted-foreground text-left">
+                      <th className="p-3 font-medium">Timestamp</th>
+                      <th className="p-3 font-medium">Product</th>
+                      <th className="p-3 font-medium text-center">Adjustment</th>
+                      <th className="p-3 font-medium">Reason</th>
+                      <th className="p-3 font-medium">Author</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((record) => (
+                      <tr key={record.id} className="border-b last:border-0 hover:bg-muted/50">
+                        <td className="p-3 text-xs text-muted-foreground whitespace-nowrap">{record.date}</td>
+                        <td className="p-3">
+                          <div className="font-medium">{record.productName}</div>
+                          <div className="text-xs text-muted-foreground">{record.sku}</div>
+                        </td>
+                        <td
+                          className={`p-3 text-center font-bold ${
+                            record.deltaQuantity > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                          }`}
+                        >
+                          {record.deltaQuantity > 0 ? `+${record.deltaQuantity}` : record.deltaQuantity}
+                        </td>
+                        <td className="p-3 text-xs">{record.reason}</td>
+                        <td className="p-3 text-xs text-muted-foreground whitespace-nowrap">{record.author}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 };

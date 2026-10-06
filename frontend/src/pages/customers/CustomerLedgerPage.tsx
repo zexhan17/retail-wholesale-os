@@ -1,17 +1,11 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Header from '@cloudscape-design/components/header';
-import Container from '@cloudscape-design/components/container';
-import Grid from '@cloudscape-design/components/grid';
-import Box from '@cloudscape-design/components/box';
-import Button from '@cloudscape-design/components/button';
-import SpaceBetween from '@cloudscape-design/components/space-between';
-import Table from '@cloudscape-design/components/table';
-import Modal from '@cloudscape-design/components/modal';
-import FormField from '@cloudscape-design/components/form-field';
-import Input from '@cloudscape-design/components/input';
-import Select from '@cloudscape-design/components/select';
-import Badge from '@cloudscape-design/components/badge';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Label } from '../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Badge } from '../../components/ui/badge';
 
 import { useCustomerStore } from '../../store/useCustomerStore';
 import { useAppStore } from '../../store/useAppStore';
@@ -22,8 +16,6 @@ export const CustomerLedgerPage: React.FC = () => {
   const navigate = useNavigate();
 
   const profile = useAppStore((state) => state.profile);
-  const theme = useAppStore((state) => state.theme);
-  const isDark = theme === 'dark';
   const addNotification = useAppStore((state) => state.addNotification);
 
   const getCustomerById = useCustomerStore((state) => state.getCustomerById);
@@ -41,12 +33,10 @@ export const CustomerLedgerPage: React.FC = () => {
 
   if (!customer) {
     return (
-      <Container>
-        <Box textAlign="center" padding="l">
-          <p>Customer not found.</p>
-          <Button onClick={() => navigate('/customers')}>Back to Customers</Button>
-        </Box>
-      </Container>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 gap-4">
+        <p className="text-muted-foreground">Customer not found.</p>
+        <Button onClick={() => navigate('/customers')}>Back to Customers</Button>
+      </div>
     );
   }
 
@@ -81,232 +71,209 @@ export const CustomerLedgerPage: React.FC = () => {
   };
 
   return (
-    <SpaceBetween size="l">
+    <div className="flex flex-col gap-6 p-6">
       {/* Header */}
-      <Header
-        variant="h1"
-        description={`Statement of Account & Khata Ledger for ${customer.companyName || customer.name}`}
-        actions={
-          <SpaceBetween direction="horizontal" size="xs">
-            <Button onClick={() => navigate('/customers')}>Back to Directory</Button>
-            <Button iconName="download" onClick={handlePrintStatement}>
-              Print Statement
-            </Button>
-            <Button
-              variant="primary"
-              iconName="add-plus"
-              onClick={() => {
-                setPaymentAmount(customer.currentBalance > 0 ? customer.currentBalance.toString() : '');
-                setIsPaymentModalOpen(true);
-              }}
-            >
-              Collect Payment
-            </Button>
-          </SpaceBetween>
-        }
-      >
-        📖 Customer Khata Statement
-      </Header>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">📖 Customer Khata Statement</h1>
+          <p className="text-muted-foreground mt-2">
+            Statement of Account & Khata Ledger for {customer.companyName || customer.name}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate('/customers')}>Back</Button>
+          <Button variant="outline" onClick={handlePrintStatement}>
+            Print Statement
+          </Button>
+          <Button
+            onClick={() => {
+              setPaymentAmount(customer.currentBalance > 0 ? customer.currentBalance.toString() : '');
+              setIsPaymentModalOpen(true);
+            }}
+          >
+            Collect Payment
+          </Button>
+        </div>
+      </div>
 
       {/* Account Info Cards */}
-      <Grid
-        gridDefinition={[
-          { colspan: { default: 12, s: 6, m: 3 } },
-          { colspan: { default: 12, s: 6, m: 3 } },
-          { colspan: { default: 12, s: 6, m: 3 } },
-          { colspan: { default: 12, s: 6, m: 3 } },
-        ]}
-      >
-        <Container>
-          <Box color="text-label" fontSize="heading-xs">OUTSTANDING DUE</Box>
-          <Box
-            fontSize="display-l"
-            fontWeight="bold"
-            color={customer.currentBalance > 0 ? 'text-status-error' : 'text-status-success'}
-            margin={{ top: 'xs' }}
-          >
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-card rounded-xl border p-4 shadow-sm">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">OUTSTANDING DUE</div>
+          <div className={`text-3xl font-bold ${customer.currentBalance > 0 ? 'text-destructive' : 'text-green-600'}`}>
             <CurrencyText amount={customer.currentBalance} />
-          </Box>
-          <Box fontSize="body-s" color="text-body-secondary" margin={{ top: 'xs' }}>
-            Current Net Balance
-          </Box>
-        </Container>
-
-        <Container>
-          <Box color="text-label" fontSize="heading-xs">CREDIT LIMIT</Box>
-          <Box fontSize="display-l" fontWeight="bold" color="text-status-info" margin={{ top: 'xs' }}>
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">Current Net Balance</div>
+        </div>
+        
+        <div className="bg-card rounded-xl border p-4 shadow-sm">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">CREDIT LIMIT</div>
+          <div className="text-3xl font-bold text-blue-600">
             <CurrencyText amount={customer.creditLimit} />
-          </Box>
-          <Box fontSize="body-s" color="text-body-secondary" margin={{ top: 'xs' }}>
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">
             Available Headroom: <CurrencyText amount={Math.max(0, customer.creditLimit - customer.currentBalance)} />
-          </Box>
-        </Container>
+          </div>
+        </div>
 
-        <Container>
-          <Box color="text-label" fontSize="heading-xs">TOTAL BILLED (LIFETIME)</Box>
-          <Box fontSize="display-l" fontWeight="bold" margin={{ top: 'xs' }}>
+        <div className="bg-card rounded-xl border p-4 shadow-sm">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">TOTAL BILLED (LIFETIME)</div>
+          <div className="text-3xl font-bold">
             <CurrencyText amount={totalBilled} />
-          </Box>
-          <Box fontSize="body-s" color="text-body-secondary" margin={{ top: 'xs' }}>
-            Total Invoices Generated
-          </Box>
-        </Container>
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">Total Invoices Generated</div>
+        </div>
 
-        <Container>
-          <Box color="text-label" fontSize="heading-xs">TOTAL PAID (LIFETIME)</Box>
-          <Box fontSize="display-l" fontWeight="bold" color="text-status-success" margin={{ top: 'xs' }}>
+        <div className="bg-card rounded-xl border p-4 shadow-sm">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">TOTAL PAID (LIFETIME)</div>
+          <div className="text-3xl font-bold text-green-600">
             <CurrencyText amount={totalPaid} />
-          </Box>
-          <Box fontSize="body-s" color="text-body-secondary" margin={{ top: 'xs' }}>
-            Cleared Settlements
-          </Box>
-        </Container>
-      </Grid>
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">Cleared Settlements</div>
+        </div>
+      </div>
 
       {/* Customer Meta Details */}
-      <Container>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+      <div className="bg-card rounded-xl border p-4 shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
           <div>
-            <div style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: '11px', textTransform: 'uppercase' }}>Buyer Name</div>
-            <div style={{ fontWeight: 600 }}>{customer.companyName || customer.name}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Buyer Name</div>
+            <div className="font-semibold">{customer.companyName || customer.name}</div>
           </div>
           <div>
-            <div style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: '11px', textTransform: 'uppercase' }}>Contact Person</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Contact Person</div>
             <div>{customer.name}</div>
           </div>
           <div>
-            <div style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: '11px', textTransform: 'uppercase' }}>Tax ID (GSTIN/VAT)</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Tax ID (GSTIN/VAT)</div>
             <div>{customer.taxId || 'N/A'}</div>
           </div>
           <div>
-            <div style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: '11px', textTransform: 'uppercase' }}>Phone</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Phone</div>
             <div>{customer.phone}</div>
           </div>
           <div>
-            <div style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: '11px', textTransform: 'uppercase' }}>Payment Terms</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Payment Terms</div>
             <div>{customer.paymentTerms.toUpperCase().replace('_', ' ')}</div>
           </div>
         </div>
-      </Container>
+      </div>
 
       {/* Ledger Table */}
-      <Table
-        header={
-          <Header variant="h2" description="Chronological record of invoices billed, payments received, and running balance">
-            Statement of Account
-          </Header>
-        }
-        columnDefinitions={[
-          {
-            id: 'date',
-            header: 'Date',
-            cell: (e) => e.date,
-          },
-          {
-            id: 'type',
-            header: 'Type',
-            cell: (e) => (
-              <Badge color={e.type === 'invoice' ? 'blue' : e.type === 'payment_received' ? 'green' : 'grey'}>
-                {e.type.toUpperCase().replace('_', ' ')}
-              </Badge>
-            ),
-          },
-          {
-            id: 'ref',
-            header: 'Reference #',
-            cell: (e) => <span style={{ fontWeight: 600 }}>{e.referenceId}</span>,
-          },
-          {
-            id: 'desc',
-            header: 'Description',
-            cell: (e) => e.description,
-          },
-          {
-            id: 'debit',
-            header: 'Debit (Billed +)',
-            cell: (e) => (
-              <span style={{ fontWeight: e.debit > 0 ? 'bold' : 'normal', color: e.debit > 0 ? '#dc2626' : undefined }}>
-                {e.debit > 0 ? <CurrencyText amount={e.debit} /> : '-'}
-              </span>
-            ),
-          },
-          {
-            id: 'credit',
-            header: 'Credit (Paid -)',
-            cell: (e) => (
-              <span style={{ fontWeight: e.credit > 0 ? 'bold' : 'normal', color: e.credit > 0 ? '#16a34a' : undefined }}>
-                {e.credit > 0 ? <CurrencyText amount={e.credit} /> : '-'}
-              </span>
-            ),
-          },
-          {
-            id: 'balance',
-            header: 'Running Balance',
-            cell: (e) => (
-              <span style={{ fontWeight: 'bold' }}>
-                <CurrencyText amount={e.runningBalance} />
-              </span>
-            ),
-          },
-        ]}
-        items={ledgerEntries}
-        empty={<Box textAlign="center" padding="l">No ledger transactions recorded for this account.</Box>}
-      />
+      <div className="bg-card rounded-xl border shadow-sm overflow-hidden flex flex-col">
+        <div className="p-4 border-b">
+          <h2 className="text-xl font-semibold">Statement of Account</h2>
+          <p className="text-sm text-muted-foreground">Chronological record of invoices billed, payments received, and running balance</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-muted text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 font-medium">Date</th>
+                <th className="px-4 py-3 font-medium">Type</th>
+                <th className="px-4 py-3 font-medium">Reference #</th>
+                <th className="px-4 py-3 font-medium">Description</th>
+                <th className="px-4 py-3 font-medium text-right">Debit (Billed +)</th>
+                <th className="px-4 py-3 font-medium text-right">Credit (Paid -)</th>
+                <th className="px-4 py-3 font-medium text-right">Running Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ledgerEntries.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                    No ledger transactions recorded for this account.
+                  </td>
+                </tr>
+              ) : (
+                ledgerEntries.map((e, idx) => (
+                  <tr key={idx} className="border-t hover:bg-muted/50">
+                    <td className="px-4 py-3 whitespace-nowrap">{e.date}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={e.type === 'invoice' ? 'default' : e.type === 'payment_received' ? 'secondary' : 'outline'} className={e.type === 'payment_received' ? 'bg-green-100 text-green-800' : ''}>
+                        {e.type.toUpperCase().replace('_', ' ')}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 font-semibold whitespace-nowrap">{e.referenceId}</td>
+                    <td className="px-4 py-3">{e.description}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`${e.debit > 0 ? 'font-bold text-destructive' : 'font-normal'}`}>
+                        {e.debit > 0 ? <CurrencyText amount={e.debit} /> : '-'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`${e.credit > 0 ? 'font-bold text-green-600' : 'font-normal'}`}>
+                        {e.credit > 0 ? <CurrencyText amount={e.credit} /> : '-'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold whitespace-nowrap">
+                      <CurrencyText amount={e.runningBalance} />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Collect Payment Modal */}
-      <Modal
-        visible={isPaymentModalOpen}
-        onDismiss={() => setIsPaymentModalOpen(false)}
-        header={`Record Payment Receipt: ${customer.companyName || customer.name}`}
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setIsPaymentModalOpen(false)}>Cancel</Button>
-              <Button variant="primary" onClick={handlePaymentSubmit}>
-                Confirm Payment & Post to Ledger
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        <SpaceBetween size="m">
-          <div>
-            Current Balance Owed:{' '}
-            <span style={{ color: '#dc2626', fontWeight: 'bold' }}>
-              <CurrencyText amount={customer.currentBalance} />
-            </span>
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Record Payment Receipt: {customer.companyName || customer.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div className="text-sm">
+              Current Balance Owed:{' '}
+              <span className="text-destructive font-bold text-lg">
+                <CurrencyText amount={customer.currentBalance} />
+              </span>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Amount Received</Label>
+              <Input
+                value={paymentAmount}
+                type="number"
+                onChange={(e) => setPaymentAmount(e.target.value)}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Payment Method</Label>
+              <Select value={paymentMethod} onValueChange={(val) => val && setPaymentMethod(val)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bank_transfer">BANK WIRE / RTGS</SelectItem>
+                  <SelectItem value="cash">CASH</SelectItem>
+                  <SelectItem value="cheque">CHEQUE</SelectItem>
+                  <SelectItem value="upi">UPI / DIGITAL</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Bank Slip / Wire / Cheque Reference #</Label>
+              <Input
+                value={paymentReference}
+                onChange={(e) => setPaymentReference(e.target.value)}
+                placeholder="e.g. WIRE-TXN-1002 or CHQ-0992"
+              />
+            </div>
           </div>
 
-          <FormField label="Amount Received">
-            <Input
-              value={paymentAmount}
-              type="number"
-              onChange={({ detail }) => setPaymentAmount(detail.value)}
-            />
-          </FormField>
-
-          <FormField label="Payment Method">
-            <Select
-              selectedOption={{ label: paymentMethod.toUpperCase(), value: paymentMethod }}
-              onChange={({ detail }) => setPaymentMethod(detail.selectedOption.value as string)}
-              options={[
-                { label: 'BANK WIRE / RTGS', value: 'bank_transfer' },
-                { label: 'CASH', value: 'cash' },
-                { label: 'CHEQUE', value: 'cheque' },
-                { label: 'UPI / DIGITAL', value: 'upi' },
-              ]}
-            />
-          </FormField>
-
-          <FormField label="Bank Slip / Wire / Cheque Reference #">
-            <Input
-              value={paymentReference}
-              onChange={({ detail }) => setPaymentReference(detail.value)}
-              placeholder="e.g. WIRE-TXN-1002 or CHQ-0992"
-            />
-          </FormField>
-        </SpaceBetween>
-      </Modal>
-    </SpaceBetween>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPaymentModalOpen(false)}>Cancel</Button>
+            <Button onClick={handlePaymentSubmit}>Confirm Payment & Post to Ledger</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };

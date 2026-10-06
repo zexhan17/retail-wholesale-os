@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-import Box from '@cloudscape-design/components/box';
-import Button from '@cloudscape-design/components/button';
-import SpaceBetween from '@cloudscape-design/components/space-between';
-import SegmentedControl from '@cloudscape-design/components/segmented-control';
+import { Button } from '../ui/button';
 import { Invoice } from '../../types/invoice';
 import { useAppStore } from '../../store/useAppStore';
 import { PrintService, ThermalPaperWidth } from '../../services/printService';
@@ -58,22 +55,22 @@ export const PrintThermalReceipt: React.FC<PrintThermalReceiptProps> = ({ invoic
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '12px', fontWeight: 600, color: isDark ? '#94a3b8' : '#475569' }}>Roll Format:</span>
-          <SegmentedControl
-            selectedId={paperFormat}
-            onChange={({ detail }) => setPaperFormat(detail.selectedId as ThermalPaperWidth)}
-            options={[
-              { id: '80mm', text: '80mm (Standard)' },
-              { id: '58mm', text: '58mm (Compact)' },
-            ]}
-          />
+          <select 
+            value={paperFormat} 
+            onChange={(e) => setPaperFormat(e.target.value as ThermalPaperWidth)}
+            className="border border-border rounded px-2 py-1 bg-background text-foreground"
+          >
+            <option value="80mm">80mm (Standard)</option>
+            <option value="58mm">58mm (Compact)</option>
+          </select>
         </div>
 
-        <SpaceBetween direction="horizontal" size="xs">
-          <Button variant="primary" iconName="download" onClick={handlePrint}>
+        <div className="flex items-center gap-2">
+          <Button onClick={handlePrint}>
             🖨️ Print Receipt ({paperFormat})
           </Button>
-          {onClose && <Button onClick={onClose}>Done</Button>}
-        </SpaceBetween>
+          {onClose && <Button variant="outline" onClick={onClose}>Done</Button>}
+        </div>
       </div>
 
       {/* Realistic Thermal Receipt Paper Container */}

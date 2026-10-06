@@ -1,21 +1,26 @@
 import React, { useState, useMemo } from 'react';
-import Header from '@cloudscape-design/components/header';
-import Table from '@cloudscape-design/components/table';
-import Box from '@cloudscape-design/components/box';
-import Button from '@cloudscape-design/components/button';
-import SpaceBetween from '@cloudscape-design/components/space-between';
-import Input from '@cloudscape-design/components/input';
-import Modal from '@cloudscape-design/components/modal';
-import FormField from '@cloudscape-design/components/form-field';
-import Grid from '@cloudscape-design/components/grid';
-import Badge from '@cloudscape-design/components/badge';
-import Pagination from '@cloudscape-design/components/pagination';
+import { Plus, Search, X } from 'lucide-react';
 
 import { useProductStore } from '../../store/useProductStore';
 import { useAppStore } from '../../store/useAppStore';
 import { Product, PriceTier } from '../../types/product';
 import { CurrencyText } from '../../components/common/CurrencyText';
 import { StockStatusIndicator } from '../../components/common/StatusBadge';
+
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Label } from '../../components/ui/label';
+import { Badge } from '../../components/ui/badge';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '../../components/ui/table';
+import { Card, CardContent } from '../../components/ui/card';
 
 export const ProductListPage: React.FC = () => {
   const profile = useAppStore((state) => state.profile);
@@ -182,417 +187,396 @@ export const ProductListPage: React.FC = () => {
   };
 
   return (
-    <SpaceBetween size="l">
+    <div className="flex flex-col gap-6 p-4">
       {/* Header */}
-      <Header
-        variant="h1"
-        description="Unified catalog with dual unit conversions (e.g. Pieces vs Cartons) and volume-based wholesale slab pricing."
-        actions={
-          <Button variant="primary" iconName="add-plus" onClick={openCreateModal}>
-            Add New Product
-          </Button>
-        }
-      >
-        🏷️ Product Catalog & Dual Pricing
-      </Header>
-
-      {/* Search Bar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          background: isDark ? '#1e293b' : '#ffffff',
-          padding: '16px',
-          borderRadius: '8px',
-          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-        }}
-      >
-        <div style={{ flex: 1, maxWidth: '420px' }}>
-          <Input
-            value={searchQuery}
-            onChange={({ detail }) => setSearchQuery(detail.value)}
-            placeholder="Search by product name, SKU, or barcode..."
-            type="search"
-          />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">🏷️ Product Catalog & Dual Pricing</h1>
+          <p className="text-muted-foreground mt-2">
+            Unified catalog with dual unit conversions (e.g. Pieces vs Cartons) and volume-based wholesale slab pricing.
+          </p>
         </div>
+        <Button onClick={openCreateModal} className="shrink-0 gap-2">
+          <Plus className="w-4 h-4" />
+          Add New Product
+        </Button>
       </div>
 
+      {/* Search Bar */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by product name, SKU, or barcode..."
+              className="pl-9"
+              type="search"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Products Table */}
-      <Table
-        columnDefinitions={[
-          {
-            id: 'product',
-            header: 'Product Details',
-            cell: (p) => (
-              <div>
-                <div style={{ fontWeight: 600 }}>{p.name}</div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>
-                  SKU: {p.sku} • Barcode: {p.barcode} • Cat: {p.category}
-                </div>
-              </div>
-            ),
-          },
-          {
-            id: 'stock',
-            header: 'Stock Level',
-            cell: (p) => (
-              <div>
-                <StockStatusIndicator current={p.stockQuantity} reorder={p.reorderLevel} />
-                <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
-                  Reorder at {p.reorderLevel} {p.primaryUnit}s
-                </div>
-              </div>
-            ),
-          },
-          {
-            id: 'uom',
-            header: 'Packaging (Dual UoM)',
-            cell: (p) => (
-              <div>
-                <div>
-                  1 {p.packagingUnit} = <strong>{p.packagingMultiplier}</strong> {p.primaryUnit}s
-                </div>
-              </div>
-            ),
-          },
-          {
-            id: 'prices',
-            header: 'Retail & Cost Price',
-            cell: (p) => (
-              <div>
-                <div>
-                  Retail:{' '}
-                  <span style={{ fontWeight: 'bold', color: '#0972d3' }}>
-                    <CurrencyText amount={p.retailPrice} />
-                  </span>{' '}
-                  / {p.primaryUnit}
-                </div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>
-                  Cost: <CurrencyText amount={p.costPrice} />
-                </div>
-              </div>
-            ),
-          },
-          {
-            id: 'wholesaleTiers',
-            header: 'Wholesale Slabs',
-            cell: (p) => (
-              <div>
-                {p.wholesaleTiers && p.wholesaleTiers.length > 0 ? (
-                  <SpaceBetween size="xxs">
-                    {p.wholesaleTiers.map((t, idx) => (
-                      <div key={idx} style={{ fontSize: '11px' }}>
-                        <Badge color="blue">
-                          {t.minQuantity}+ {p.primaryUnit}s @ <CurrencyText amount={t.pricePerUnit} />
-                        </Badge>
+      <Card>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Product Details</TableHead>
+                <TableHead>Stock Level</TableHead>
+                <TableHead>Packaging (Dual UoM)</TableHead>
+                <TableHead>Retail & Cost Price</TableHead>
+                <TableHead>Wholesale Slabs</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginated.length > 0 ? (
+                paginated.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      <div className="font-semibold">{p.name}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        SKU: {p.sku} • Barcode: {p.barcode} • Cat: {p.category}
                       </div>
-                    ))}
-                  </SpaceBetween>
-                ) : (
-                  <span style={{ color: '#9ca3af', fontSize: '12px' }}>No slabs set</span>
-                )}
-              </div>
-            ),
-          },
-          {
-            id: 'actions',
-            header: 'Actions',
-            cell: (p) => (
-              <SpaceBetween direction="horizontal" size="xs">
-                <Button variant="inline-link" onClick={() => openEditModal(p)}>
-                  Edit
-                </Button>
-                <Button
-                  variant="inline-link"
-                  onClick={() => {
-                    setAdjustModalProduct(p);
-                    setAdjustDelta('0');
-                  }}
-                >
-                  Adjust Stock
-                </Button>
-                <Button
-                  variant="inline-link"
-                  onClick={() => setDeleteModalProduct(p)}
-                >
-                  Delete
-                </Button>
-              </SpaceBetween>
-            ),
-          },
-        ]}
-        items={paginated}
-        pagination={
-          <Pagination
-            currentPageIndex={currentPage}
-            pagesCount={totalPages}
-            onChange={({ detail }) => setCurrentPage(detail.currentPageIndex)}
-          />
-        }
-        empty={<Box textAlign="center" padding="l">No products found.</Box>}
-      />
+                    </TableCell>
+                    <TableCell>
+                      <StockStatusIndicator current={p.stockQuantity} reorder={p.reorderLevel} />
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Reorder at {p.reorderLevel} {p.primaryUnit}s
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      1 {p.packagingUnit} = <strong className="font-semibold">{p.packagingMultiplier}</strong> {p.primaryUnit}s
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        Retail: <span className="font-bold text-blue-600 dark:text-blue-400"><CurrencyText amount={p.retailPrice} /></span> / {p.primaryUnit}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Cost: <CurrencyText amount={p.costPrice} />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {p.wholesaleTiers && p.wholesaleTiers.length > 0 ? (
+                        <div className="flex flex-col gap-1">
+                          {p.wholesaleTiers.map((t, idx) => (
+                            <Badge key={idx} variant="secondary" className="w-fit text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30">
+                              {t.minQuantity}+ {p.primaryUnit}s @ <CurrencyText amount={t.pricePerUnit} />
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No slabs set</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button variant="link" size="sm" onClick={() => openEditModal(p)} className="p-0 h-auto">
+                          Edit
+                        </Button>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          onClick={() => {
+                            setAdjustModalProduct(p);
+                            setAdjustDelta('0');
+                          }}
+                          className="p-0 h-auto"
+                        >
+                          Adjust Stock
+                        </Button>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          onClick={() => setDeleteModalProduct(p)}
+                          className="p-0 h-auto text-destructive"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    No products found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-end space-x-2 py-4 pr-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <div className="text-sm">
+              Page {currentPage} of {totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </Card>
 
       {/* Add / Edit Product Modal */}
-      <Modal
-        visible={isProductModalOpen}
-        onDismiss={() => setIsProductModalOpen(false)}
-        header={editingProduct ? `Edit Product: ${editingProduct.name}` : 'Add New Product'}
-        size="large"
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setIsProductModalOpen(false)}>Cancel</Button>
-              <Button variant="primary" onClick={handleSaveProduct}>
-                Save Product
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        <SpaceBetween size="m">
-          {/* Basic Info */}
-          <Grid
-            gridDefinition={[
-              { colspan: { default: 12, m: 6 } },
-              { colspan: { default: 6, m: 3 } },
-              { colspan: { default: 6, m: 3 } },
-            ]}
-          >
-            <FormField label="Product Name">
-              <Input value={name} onChange={({ detail }) => setName(detail.value)} placeholder="e.g. Basmati Rice 5kg" />
-            </FormField>
-            <FormField label="SKU">
-              <Input value={sku} onChange={({ detail }) => setSku(detail.value)} />
-            </FormField>
-            <FormField label="Barcode (UPC/EAN)">
-              <Input value={barcode} onChange={({ detail }) => setBarcode(detail.value)} />
-            </FormField>
-          </Grid>
-
-          {/* Category & Dual UoM */}
-          <Grid
-            gridDefinition={[
-              { colspan: { default: 12, m: 4 } },
-              { colspan: { default: 6, m: 2.5 } },
-              { colspan: { default: 6, m: 2.5 } },
-              { colspan: { default: 12, m: 3 } },
-            ]}
-          >
-            <FormField label="Category">
-              <Input value={category} onChange={({ detail }) => setCategory(detail.value)} />
-            </FormField>
-            <FormField label="Primary Unit (Retail)">
-              <Input value={primaryUnit} onChange={({ detail }) => setPrimaryUnit(detail.value)} placeholder="Piece, Bag, Kg" />
-            </FormField>
-            <FormField label="Packaging Unit (Wholesale)">
-              <Input value={packagingUnit} onChange={({ detail }) => setPackagingUnit(detail.value)} placeholder="Carton, Box" />
-            </FormField>
-            <FormField label="Units per Package">
-              <Input value={packagingMultiplier} type="number" onChange={({ detail }) => setPackagingMultiplier(detail.value)} />
-            </FormField>
-          </Grid>
-
-          {/* Pricing & Stock */}
-          <Grid
-            gridDefinition={[
-              { colspan: { default: 6, m: 2.5 } },
-              { colspan: { default: 6, m: 2.5 } },
-              { colspan: { default: 6, m: 2 } },
-              { colspan: { default: 6, m: 2.5 } },
-              { colspan: { default: 12, m: 2.5 } },
-            ]}
-          >
-            <FormField label="Cost Price">
-              <Input value={costPrice} type="number" onChange={({ detail }) => setCostPrice(detail.value)} />
-            </FormField>
-            <FormField label="Retail Selling Price">
-              <Input value={retailPrice} type="number" onChange={({ detail }) => setRetailPrice(detail.value)} />
-            </FormField>
-            <FormField label="Tax Rate (%)">
-              <Input value={taxRate} type="number" onChange={({ detail }) => setTaxRate(detail.value)} />
-            </FormField>
-            <FormField label="Initial Stock">
-              <Input value={stockQuantity} type="number" onChange={({ detail }) => setStockQuantity(detail.value)} />
-            </FormField>
-            <FormField label="Reorder Threshold">
-              <Input value={reorderLevel} type="number" onChange={({ detail }) => setReorderLevel(detail.value)} />
-            </FormField>
-          </Grid>
-
-          {/* Wholesale Quantity Slabs Editor */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <div style={{ fontWeight: 'bold' }}>Wholesale Volume Price Slabs</div>
-              <Button
-                iconName="add-plus"
-                onClick={() =>
-                  setTiers([
-                    ...tiers,
-                    {
-                      minQuantity: tiers.length > 0 ? tiers[tiers.length - 1].minQuantity + 20 : 10,
-                      pricePerUnit: parseFloat(costPrice) + 2,
-                      label: `Bulk Slab (${tiers.length + 1})`,
-                    },
-                  ])
-                }
-              >
-                Add Slab
-              </Button>
+      <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingProduct ? `Edit Product: ${editingProduct.name}` : 'Add New Product'}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            {/* Basic Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid gap-2 md:col-span-2">
+                <Label htmlFor="name">Product Name</Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Basmati Rice 5kg" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="sku">SKU</Label>
+                <Input id="sku" value={sku} onChange={(e) => setSku(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="barcode">Barcode (UPC/EAN)</Label>
+                <Input id="barcode" value={barcode} onChange={(e) => setBarcode(e.target.value)} />
+              </div>
             </div>
 
-            <SpaceBetween size="xs">
-              {tiers.map((tier, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: 'flex',
-                    gap: '12px',
-                    alignItems: 'center',
-                    background: isDark ? '#0f172a' : '#f8fafc',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-                  }}
+            {/* Category & Dual UoM */}
+            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-4">
+              <div className="grid gap-2 md:col-span-4">
+                <Label htmlFor="category">Category</Label>
+                <Input id="category" value={category} onChange={(e) => setCategory(e.target.value)} />
+              </div>
+              <div className="grid gap-2 md:col-span-2">
+                <Label htmlFor="primaryUnit">Primary Unit (Retail)</Label>
+                <Input id="primaryUnit" value={primaryUnit} onChange={(e) => setPrimaryUnit(e.target.value)} placeholder="Piece, Bag, Kg" />
+              </div>
+              <div className="grid gap-2 md:col-span-3">
+                <Label htmlFor="packagingUnit">Packaging Unit (Wholesale)</Label>
+                <Input id="packagingUnit" value={packagingUnit} onChange={(e) => setPackagingUnit(e.target.value)} placeholder="Carton, Box" />
+              </div>
+              <div className="grid gap-2 md:col-span-3">
+                <Label htmlFor="packagingMultiplier">Units per Package</Label>
+                <Input id="packagingMultiplier" value={packagingMultiplier} type="number" onChange={(e) => setPackagingMultiplier(e.target.value)} />
+              </div>
+            </div>
+
+            {/* Pricing & Stock */}
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="costPrice">Cost Price</Label>
+                <Input id="costPrice" value={costPrice} type="number" onChange={(e) => setCostPrice(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="retailPrice">Retail Selling Price</Label>
+                <Input id="retailPrice" value={retailPrice} type="number" onChange={(e) => setRetailPrice(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                <Input id="taxRate" value={taxRate} type="number" onChange={(e) => setTaxRate(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="stockQuantity">Initial Stock</Label>
+                <Input id="stockQuantity" value={stockQuantity} type="number" onChange={(e) => setStockQuantity(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="reorderLevel">Reorder Threshold</Label>
+                <Input id="reorderLevel" value={reorderLevel} type="number" onChange={(e) => setReorderLevel(e.target.value)} />
+              </div>
+            </div>
+
+            {/* Wholesale Quantity Slabs Editor */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="font-semibold text-sm">Wholesale Volume Price Slabs</div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() =>
+                    setTiers([
+                      ...tiers,
+                      {
+                        minQuantity: tiers.length > 0 ? tiers[tiers.length - 1].minQuantity + 20 : 10,
+                        pricePerUnit: parseFloat(costPrice) + 2,
+                        label: `Bulk Slab (${tiers.length + 1})`,
+                      },
+                    ])
+                  }
                 >
-                  <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }}>Label: </span>
-                    <Input
-                      value={tier.label || ''}
-                      onChange={({ detail }) => {
-                        const updated = [...tiers];
-                        updated[idx].label = detail.value;
-                        setTiers(updated);
-                      }}
-                      placeholder="e.g. Master Carton Slab"
-                    />
+                  <Plus className="w-4 h-4" />
+                  Add Slab
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {tiers.map((tier, idx) => (
+                  <div
+                    key={idx}
+                    className="flex flex-col sm:flex-row gap-4 items-end sm:items-center bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800"
+                  >
+                    <div className="flex-1 w-full grid gap-1.5">
+                      <Label className="text-xs text-muted-foreground">Label</Label>
+                      <Input
+                        value={tier.label || ''}
+                        onChange={(e) => {
+                          const updated = [...tiers];
+                          updated[idx].label = e.target.value;
+                          setTiers(updated);
+                        }}
+                        placeholder="e.g. Master Carton Slab"
+                      />
+                    </div>
+                    <div className="w-full sm:w-32 grid gap-1.5">
+                      <Label className="text-xs text-muted-foreground">Min Qty</Label>
+                      <Input
+                        value={tier.minQuantity.toString()}
+                        type="number"
+                        onChange={(e) => {
+                          const updated = [...tiers];
+                          updated[idx].minQuantity = parseInt(e.target.value) || 1;
+                          setTiers(updated);
+                        }}
+                      />
+                    </div>
+                    <div className="w-full sm:w-32 grid gap-1.5">
+                      <Label className="text-xs text-muted-foreground">Rate per Unit</Label>
+                      <Input
+                        value={tier.pricePerUnit.toString()}
+                        type="number"
+                        onChange={(e) => {
+                          const updated = [...tiers];
+                          updated[idx].pricePerUnit = parseFloat(e.target.value) || 0;
+                          setTiers(updated);
+                        }}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setTiers(tiers.filter((_, i) => i !== idx))}
+                      className="text-muted-foreground hover:text-destructive shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <div style={{ width: '130px' }}>
-                    <span style={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }}>Min Qty: </span>
-                    <Input
-                      value={tier.minQuantity.toString()}
-                      type="number"
-                      onChange={({ detail }) => {
-                        const updated = [...tiers];
-                        updated[idx].minQuantity = parseInt(detail.value) || 1;
-                        setTiers(updated);
-                      }}
-                    />
-                  </div>
-                  <div style={{ width: '130px' }}>
-                    <span style={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }}>Rate per Unit: </span>
-                    <Input
-                      value={tier.pricePerUnit.toString()}
-                      type="number"
-                      onChange={({ detail }) => {
-                        const updated = [...tiers];
-                        updated[idx].pricePerUnit = parseFloat(detail.value) || 0;
-                        setTiers(updated);
-                      }}
-                    />
-                  </div>
-                  <Button
-                    variant="inline-icon"
-                    iconName="close"
-                    onClick={() => setTiers(tiers.filter((_, i) => i !== idx))}
-                  />
-                </div>
-              ))}
-            </SpaceBetween>
+                ))}
+              </div>
+            </div>
           </div>
-        </SpaceBetween>
-      </Modal>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsProductModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveProduct}>Save Product</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Quick Adjust Stock Modal */}
-      <Modal
-        visible={!!adjustModalProduct}
-        onDismiss={() => setAdjustModalProduct(null)}
-        header={`Quick Stock Adjustment: ${adjustModalProduct?.name}`}
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setAdjustModalProduct(null)}>Cancel</Button>
-              <Button variant="primary" onClick={handleQuickAdjustSubmit}>
-                Confirm Stock Adjustment
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        {adjustModalProduct && (
-          <SpaceBetween size="m">
-            <div>
-              <strong>Current Stock:</strong> {adjustModalProduct.stockQuantity} {adjustModalProduct.primaryUnit}s
+      <Dialog open={!!adjustModalProduct} onOpenChange={(open) => !open && setAdjustModalProduct(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Quick Stock Adjustment: {adjustModalProduct?.name}</DialogTitle>
+          </DialogHeader>
+          
+          {adjustModalProduct && (
+            <div className="grid gap-4 py-4">
+              <div className="text-sm">
+                <strong>Current Stock:</strong> {adjustModalProduct.stockQuantity} {adjustModalProduct.primaryUnit}s
+              </div>
+  
+              <div className="grid gap-2">
+                <Label htmlFor="adjustDelta">Quantity Change (+ to add, - to deduct)</Label>
+                <Input
+                  id="adjustDelta"
+                  value={adjustDelta}
+                  type="number"
+                  onChange={(e) => setAdjustDelta(e.target.value)}
+                  placeholder="e.g. +10 or -3"
+                />
+              </div>
+  
+              <div className="grid gap-2">
+                <Label htmlFor="adjustReason">Reason for Adjustment</Label>
+                <Input
+                  id="adjustReason"
+                  value={adjustReason}
+                  onChange={(e) => setAdjustReason(e.target.value)}
+                  placeholder="e.g. Damaged during unloading, stock recount discrepancy"
+                />
+              </div>
+  
+              <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-md border border-slate-200 dark:border-slate-800 text-sm">
+                New Projected Stock:{' '}
+                <strong className="font-semibold">
+                  {Math.max(0, adjustModalProduct.stockQuantity + (parseInt(adjustDelta) || 0))}{' '}
+                  {adjustModalProduct.primaryUnit}s
+                </strong>
+              </div>
             </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAdjustModalProduct(null)}>Cancel</Button>
+            <Button onClick={handleQuickAdjustSubmit}>Confirm Stock Adjustment</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-            <FormField label="Quantity Change (+ to add, - to deduct)">
-              <Input
-                value={adjustDelta}
-                type="number"
-                onChange={({ detail }) => setAdjustDelta(detail.value)}
-                placeholder="e.g. +10 or -3"
-              />
-            </FormField>
-
-            <FormField label="Reason for Adjustment">
-              <Input
-                value={adjustReason}
-                onChange={({ detail }) => setAdjustReason(detail.value)}
-                placeholder="e.g. Damaged during unloading, stock recount discrepancy"
-              />
-            </FormField>
-
-            <div
-              style={{
-                background: isDark ? '#0f172a' : '#f8fafc',
-                padding: '12px',
-                borderRadius: '6px',
-                border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+      {/* Delete Product Confirmation Modal */}
+      <Dialog open={!!deleteModalProduct} onOpenChange={(open) => !open && setDeleteModalProduct(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Product from Catalog?</DialogTitle>
+          </DialogHeader>
+          
+          {deleteModalProduct && (
+            <div className="py-4 text-sm text-muted-foreground">
+              Are you sure you want to permanently remove <strong className="text-foreground">{deleteModalProduct.name}</strong> (SKU: {deleteModalProduct.sku})? This product will no longer appear in POS or Wholesale billing.
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteModalProduct(null)}>Cancel</Button>
+            <Button 
+              variant="destructive"
+              onClick={() => {
+                if (deleteModalProduct) {
+                  deleteProduct(deleteModalProduct.id);
+                  addNotification({
+                    type: 'info',
+                    header: 'Product Removed',
+                    content: `Product "${deleteModalProduct.name}" removed from catalog.`,
+                  });
+                  setDeleteModalProduct(null);
+                }
               }}
             >
-              New Projected Stock:{' '}
-              <strong>
-                {Math.max(0, adjustModalProduct.stockQuantity + (parseInt(adjustDelta) || 0))}{' '}
-                {adjustModalProduct.primaryUnit}s
-              </strong>
-            </div>
-          </SpaceBetween>
-        )}
-      </Modal>
-      {/* Delete Product Confirmation Modal */}
-      <Modal
-        visible={!!deleteModalProduct}
-        onDismiss={() => setDeleteModalProduct(null)}
-        header="Delete Product from Catalog?"
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setDeleteModalProduct(null)}>Cancel</Button>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  if (deleteModalProduct) {
-                    deleteProduct(deleteModalProduct.id);
-                    addNotification({
-                      type: 'info',
-                      header: 'Product Removed',
-                      content: `Product "${deleteModalProduct.name}" removed from catalog.`,
-                    });
-                    setDeleteModalProduct(null);
-                  }
-                }}
-              >
-                Confirm Delete
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        {deleteModalProduct && (
-          <Box color="text-body-secondary">
-            Are you sure you want to permanently remove <strong>{deleteModalProduct.name}</strong> (SKU: {deleteModalProduct.sku})? This product will no longer appear in POS or Wholesale billing.
-          </Box>
-        )}
-      </Modal>
-    </SpaceBetween>
+              Confirm Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };

@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { applyMode, Mode } from '@cloudscape-design/global-styles';
 
 import { useAppStore } from './store/useAppStore';
 import { MainLayout } from './layouts/MainLayout';
@@ -22,7 +21,11 @@ export const App: React.FC = () => {
   const theme = useAppStore((state) => state.theme);
 
   useEffect(() => {
-    applyMode(theme === 'dark' ? Mode.Dark : Mode.Light);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [theme]);
 
   return (

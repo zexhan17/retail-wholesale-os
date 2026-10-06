@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
-import Header from '@cloudscape-design/components/header';
-import Container from '@cloudscape-design/components/container';
-import Grid from '@cloudscape-design/components/grid';
-import FormField from '@cloudscape-design/components/form-field';
-import Input from '@cloudscape-design/components/input';
-import Button from '@cloudscape-design/components/button';
-import SpaceBetween from '@cloudscape-design/components/space-between';
-import Select from '@cloudscape-design/components/select';
-import Modal from '@cloudscape-design/components/modal';
-import Box from '@cloudscape-design/components/box';
-import Alert from '@cloudscape-design/components/alert';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Label } from '../../components/ui/label';
 
 import { useAppStore } from '../../store/useAppStore';
 import { StorageService } from '../../services/storage';
@@ -110,7 +103,7 @@ export const SettingsPage: React.FC = () => {
         setTimeout(() => window.location.reload(), 800);
       } catch (err) {
         addNotification({
-          type: 'error',
+          type: 'error', // mapping generic error string for standard usage
           header: 'Restore Failed',
           content: 'Invalid or corrupt backup JSON file.',
         });
@@ -127,197 +120,160 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <SpaceBetween size="l">
+    <div className="flex flex-col gap-6 p-6">
       {/* Header */}
-      <Header
-        variant="h1"
-        description="Configure your shop details, currency, tax rules, and manage persistent database backups."
-        actions={
-          <Button variant="primary" onClick={handleSaveProfile} iconName="check">
-            Save Changes
-          </Button>
-        }
-      >
-        ⚙️ Settings & Database Management
-      </Header>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">⚙️ Settings & Database Management</h1>
+          <p className="text-muted-foreground mt-2">
+            Configure your shop details, currency, tax rules, and manage persistent database backups.
+          </p>
+        </div>
+        <Button onClick={handleSaveProfile}>
+          Save Changes
+        </Button>
+      </div>
 
       {/* Profile & Tax Config */}
-      <Container
-        header={
-          <Header variant="h2" description="Store identity rendered on thermal receipts and formal B2B tax invoices">
-            Store Profile & Tax Credentials
-          </Header>
-        }
-      >
-        <SpaceBetween size="m">
-          <Grid
-            gridDefinition={[
-              { colspan: { default: 12, m: 6 } },
-              { colspan: { default: 12, m: 6 } },
-            ]}
-          >
-            <FormField label="Store / Business Legal Name">
-              <Input value={storeName} onChange={({ detail }) => setStoreName(detail.value)} />
-            </FormField>
+      <div className="bg-card rounded-xl border shadow-sm flex flex-col">
+        <div className="p-4 border-b">
+          <h2 className="text-xl font-semibold">Store Profile & Tax Credentials</h2>
+          <p className="text-sm text-muted-foreground">Store identity rendered on thermal receipts and formal B2B tax invoices</p>
+        </div>
+        <div className="p-4 flex flex-col gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label>Store / Business Legal Name</Label>
+              <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label>Store Tagline / Slogan</Label>
+              <Input value={tagline} onChange={(e) => setTagline(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label>Phone Number</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label>Email Address</Label>
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+          </div>
 
-            <FormField label="Store Tagline / Slogan">
-              <Input value={tagline} onChange={({ detail }) => setTagline(detail.value)} />
-            </FormField>
+          <div className="grid gap-2">
+            <Label>Business Physical Address</Label>
+            <Input value={address} onChange={(e) => setAddress(e.target.value)} />
+          </div>
 
-            <FormField label="Phone Number">
-              <Input value={phone} onChange={({ detail }) => setPhone(detail.value)} />
-            </FormField>
-
-            <FormField label="Email Address">
-              <Input value={email} onChange={({ detail }) => setEmail(detail.value)} />
-            </FormField>
-          </Grid>
-
-          <FormField label="Business Physical Address">
-            <Input value={address} onChange={({ detail }) => setAddress(detail.value)} />
-          </FormField>
-
-          <Grid
-            gridDefinition={[
-              { colspan: { default: 12, m: 4 } },
-              { colspan: { default: 6, m: 4 } },
-              { colspan: { default: 6, m: 4 } },
-            ]}
-          >
-            <FormField label="Tax Registration ID (GSTIN / VAT / EIN)">
-              <Input value={taxNumber} onChange={({ detail }) => setTaxNumber(detail.value)} />
-            </FormField>
-
-            <FormField
-              label="Currency Symbol"
-              description="Leave empty for no symbol, or enter ₹, €, £ (dollar sign is disabled)"
-            >
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="sm:col-span-2 grid gap-2">
+              <Label>Tax Registration ID (GSTIN / VAT / EIN)</Label>
+              <Input value={taxNumber} onChange={(e) => setTaxNumber(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label>Currency Symbol</Label>
               <Input
                 value={currencySymbol}
-                onChange={({ detail }) => setCurrencySymbol(detail.value)}
-                placeholder="₹, €, £ (or leave empty)"
+                onChange={(e) => setCurrencySymbol(e.target.value)}
+                placeholder="₹, €, £ (or empty)"
               />
-            </FormField>
-
-            <FormField label="Currency Code">
+              <p className="text-[11px] text-muted-foreground">Leave empty for no symbol</p>
+            </div>
+            <div className="grid gap-2">
+              <Label>Currency Code</Label>
               <Input
                 value={currencyCode}
-                onChange={({ detail }) => setCurrencyCode(detail.value)}
+                onChange={(e) => setCurrencyCode(e.target.value)}
                 placeholder="USD, INR, EUR"
               />
-            </FormField>
-          </Grid>
+            </div>
+          </div>
 
-          <FormField label="Receipt Footer Message">
+          <div className="grid gap-2">
+            <Label>Receipt Footer Message</Label>
             <Input
               value={receiptFooterMessage}
-              onChange={({ detail }) => setReceiptFooterMessage(detail.value)}
+              onChange={(e) => setReceiptFooterMessage(e.target.value)}
               placeholder="e.g. Thank you for shopping with us!"
             />
-          </FormField>
-        </SpaceBetween>
-      </Container>
+          </div>
+        </div>
+      </div>
 
       {/* Bank Details for Wholesale Invoicing */}
-      <Container
-        header={
-          <Header variant="h2" description="Printed on B2B Wholesale Tax Invoices for client wire / RTGS payments">
-            Bank Wire Transfer Details
-          </Header>
-        }
-      >
-        <Grid
-          gridDefinition={[
-            { colspan: { default: 12, m: 6 } },
-            { colspan: { default: 12, m: 6 } },
-            { colspan: { default: 12, m: 6 } },
-            { colspan: { default: 12, m: 6 } },
-          ]}
-        >
-          <FormField label="Bank Name">
-            <Input value={bankName} onChange={({ detail }) => setBankName(detail.value)} placeholder="e.g. JP Morgan Chase" />
-          </FormField>
-          <FormField label="Account Holder Name">
-            <Input value={accountHolder} onChange={({ detail }) => setAccountHolder(detail.value)} />
-          </FormField>
-          <FormField label="Account Number">
-            <Input value={accountNumber} onChange={({ detail }) => setAccountNumber(detail.value)} />
-          </FormField>
-          <FormField label="Routing / IFSC Code">
-            <Input value={routingOrIfsc} onChange={({ detail }) => setRoutingOrIfsc(detail.value)} />
-          </FormField>
-        </Grid>
-      </Container>
+      <div className="bg-card rounded-xl border shadow-sm flex flex-col">
+        <div className="p-4 border-b">
+          <h2 className="text-xl font-semibold">Bank Wire Transfer Details</h2>
+          <p className="text-sm text-muted-foreground">Printed on B2B Wholesale Tax Invoices for client wire / RTGS payments</p>
+        </div>
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid gap-2">
+            <Label>Bank Name</Label>
+            <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. JP Morgan Chase" />
+          </div>
+          <div className="grid gap-2">
+            <Label>Account Holder Name</Label>
+            <Input value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label>Account Number</Label>
+            <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label>Routing / IFSC Code</Label>
+            <Input value={routingOrIfsc} onChange={(e) => setRoutingOrIfsc(e.target.value)} />
+          </div>
+        </div>
+      </div>
 
       {/* Database Backup & Maintenance */}
-      <Container
-        header={
-          <Header variant="h2" description="Export and import your entire product catalog, customers, invoices, and ledger">
-            Data Portability & Factory Reset
-          </Header>
-        }
-      >
-        <SpaceBetween size="m">
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <Button variant="primary" iconName="download" onClick={handleExportBackup}>
+      <div className="bg-card rounded-xl border shadow-sm flex flex-col">
+        <div className="p-4 border-b">
+          <h2 className="text-xl font-semibold">Data Portability & Factory Reset</h2>
+          <p className="text-sm text-muted-foreground">Export and import your entire product catalog, customers, invoices, and ledger</p>
+        </div>
+        <div className="p-4 flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <Button variant="default" onClick={handleExportBackup}>
               Download Full JSON Backup
             </Button>
 
-            <label
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 16px',
-                border: '1px solid #0972d3',
-                borderRadius: '4px',
-                background: isDark ? '#1e293b' : '#ffffff',
-                color: isDark ? '#60a5fa' : '#0972d3',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '13px',
-              }}
-            >
+            <label className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 cursor-pointer">
               📥 Upload & Restore JSON Backup
               <input
                 type="file"
                 accept=".json"
-                style={{ display: 'none' }}
+                className="hidden"
                 onChange={handleImportFile}
               />
             </label>
 
-            <Button variant="normal" iconName="refresh" onClick={() => setIsResetModalOpen(true)}>
+            <Button variant="outline" onClick={() => setIsResetModalOpen(true)}>
               Reset to Factory Demo Data
             </Button>
           </div>
 
-          <Alert type="info">
+          <div className="bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300 p-3 rounded-md border border-blue-200 dark:border-blue-800 text-sm">
             All database state is stored locally and securely in your browser's persistent storage. You can download JSON backups anytime to migrate to other devices or machines.
-          </Alert>
-        </SpaceBetween>
-      </Container>
+          </div>
+        </div>
+      </div>
 
       {/* Reset Confirmation Modal */}
-      <Modal
-        visible={isResetModalOpen}
-        onDismiss={() => setIsResetModalOpen(false)}
-        header="Reset to Factory Demo Data?"
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setIsResetModalOpen(false)}>Cancel</Button>
-              <Button variant="primary" onClick={handleConfirmReset}>
-                Confirm Reset
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        <Box color="text-body-secondary">
-          This will clear all current custom products, orders, and ledger entries, and reload the initial demo store data. This action cannot be undone unless you have a downloaded backup.
-        </Box>
-      </Modal>
-    </SpaceBetween>
+      <Dialog open={isResetModalOpen} onOpenChange={setIsResetModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset to Factory Demo Data?</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 text-muted-foreground text-sm">
+            This will clear all current custom products, orders, and ledger entries, and reload the initial demo store data. This action cannot be undone unless you have a downloaded backup.
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsResetModalOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleConfirmReset}>Confirm Reset</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };

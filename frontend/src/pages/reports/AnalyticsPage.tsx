@@ -1,11 +1,5 @@
 import React from 'react';
-import Header from '@cloudscape-design/components/header';
-import Container from '@cloudscape-design/components/container';
-import Grid from '@cloudscape-design/components/grid';
-import Box from '@cloudscape-design/components/box';
-import SpaceBetween from '@cloudscape-design/components/space-between';
-import Table from '@cloudscape-design/components/table';
-import Badge from '@cloudscape-design/components/badge';
+import { Badge } from '../../components/ui/badge';
 
 import { useSalesStore } from '../../store/useSalesStore';
 import { useProductStore } from '../../store/useProductStore';
@@ -13,7 +7,6 @@ import { useAppStore } from '../../store/useAppStore';
 import { CurrencyText } from '../../components/common/CurrencyText';
 
 export const AnalyticsPage: React.FC = () => {
-  const profile = useAppStore((state) => state.profile);
   const theme = useAppStore((state) => state.theme);
   const isDark = theme === 'dark';
   const invoices = useSalesStore((state) => state.invoices);
@@ -67,98 +60,73 @@ export const AnalyticsPage: React.FC = () => {
   const deadStock = products.filter((p) => !productSalesMap.has(p.id));
 
   return (
-    <SpaceBetween size="l">
+    <div className="flex flex-col gap-6 p-6">
       {/* Header */}
-      <Header
-        variant="h1"
-        description="Comprehensive financial reporting, gross profit margins, retail vs wholesale channel analysis, and inventory velocity."
-      >
-        📊 Financial & Sales Analytics
-      </Header>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">📊 Financial & Sales Analytics</h1>
+        <p className="text-muted-foreground mt-2">
+          Comprehensive financial reporting, gross profit margins, retail vs wholesale channel analysis, and inventory velocity.
+        </p>
+      </div>
 
       {/* KPI Cards */}
-      <Grid
-        gridDefinition={[
-          { colspan: { default: 12, s: 6, m: 3 } },
-          { colspan: { default: 12, s: 6, m: 3 } },
-          { colspan: { default: 12, s: 6, m: 3 } },
-          { colspan: { default: 12, s: 6, m: 3 } },
-        ]}
-      >
-        <Container>
-          <Box color="text-label" fontSize="heading-xs">TOTAL REVENUE</Box>
-          <Box fontSize="display-l" fontWeight="bold" color="text-status-info" margin={{ top: 'xs' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-card rounded-xl border p-4 shadow-sm">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">TOTAL REVENUE</div>
+          <div className="text-3xl font-bold text-blue-600">
             <CurrencyText amount={totalRevenue} />
-          </Box>
-          <Box fontSize="body-s" color="text-body-secondary" margin={{ top: 'xs' }}>
-            Across {invoices.length} total orders
-          </Box>
-        </Container>
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">Across {invoices.length} total orders</div>
+        </div>
 
-        <Container>
-          <Box color="text-label" fontSize="heading-xs">ESTIMATED GROSS PROFIT</Box>
-          <Box fontSize="display-l" fontWeight="bold" color="text-status-success" margin={{ top: 'xs' }}>
+        <div className="bg-card rounded-xl border p-4 shadow-sm">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">ESTIMATED GROSS PROFIT</div>
+          <div className="text-3xl font-bold text-green-600">
             <CurrencyText amount={estimatedGrossProfit} />
-          </Box>
-          <Box fontSize="body-s" color="text-body-secondary" margin={{ top: 'xs' }}>
-            Margin: {grossMarginPercentage.toFixed(1)}%
-          </Box>
-        </Container>
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">Margin: {grossMarginPercentage.toFixed(1)}%</div>
+        </div>
 
-        <Container>
-          <Box color="text-label" fontSize="heading-xs">COST OF GOODS (COGS)</Box>
-          <Box fontSize="display-l" fontWeight="bold" margin={{ top: 'xs' }}>
+        <div className="bg-card rounded-xl border p-4 shadow-sm">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">COST OF GOODS (COGS)</div>
+          <div className="text-3xl font-bold">
             <CurrencyText amount={totalCOGS} />
-          </Box>
-          <Box fontSize="body-s" color="text-body-secondary" margin={{ top: 'xs' }}>
-            Inventory procurement cost
-          </Box>
-        </Container>
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">Inventory procurement cost</div>
+        </div>
 
-        <Container>
-          <Box color="text-label" fontSize="heading-xs">TAX COLLECTED (GST / VAT)</Box>
-          <Box fontSize="display-l" fontWeight="bold" color="text-status-warning" margin={{ top: 'xs' }}>
+        <div className="bg-card rounded-xl border p-4 shadow-sm">
+          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">TAX COLLECTED (GST / VAT)</div>
+          <div className="text-3xl font-bold text-amber-600">
             <CurrencyText amount={totalTax} />
-          </Box>
-          <Box fontSize="body-s" color="text-body-secondary" margin={{ top: 'xs' }}>
-            Ready for tax filing
-          </Box>
-        </Container>
-      </Grid>
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">Ready for tax filing</div>
+        </div>
+      </div>
 
       {/* Channel Comparison */}
-      <Container
-        header={
-          <Header variant="h2" description="Comparison between retail counter transactions and B2B wholesale distribution">
-            Channel Performance Breakdown
-          </Header>
-        }
-      >
-        <Grid
-          gridDefinition={[
-            { colspan: { default: 12, m: 6 } },
-            { colspan: { default: 12, m: 6 } },
-          ]}
-        >
+      <div className="bg-card rounded-xl border shadow-sm flex flex-col">
+        <div className="p-4 border-b">
+          <h2 className="text-xl font-semibold">Channel Performance Breakdown</h2>
+          <p className="text-sm text-muted-foreground">Comparison between retail counter transactions and B2B wholesale distribution</p>
+        </div>
+        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Retail Channel Card */}
           <div
-            style={{
-              border: `1px solid ${isDark ? '#059669' : '#10b981'}`,
-              borderRadius: '8px',
-              padding: '16px',
-              background: isDark ? '#064e3b' : '#f0fdf4',
-            }}
+            className={`border rounded-xl p-4 ${
+              isDark ? 'border-emerald-700 bg-emerald-950' : 'border-emerald-500 bg-emerald-50'
+            }`}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontWeight: 'bold', fontSize: '16px', color: isDark ? '#6ee7b7' : '#065f46' }}>
+            <div className="flex justify-between items-center">
+              <div className={`font-bold text-lg ${isDark ? 'text-emerald-400' : 'text-emerald-800'}`}>
                 ⚡ Retail Counter POS
               </div>
-              <Badge color="green">{retailInvoices.length} Bills</Badge>
+              <Badge className="bg-green-600 hover:bg-green-700">{retailInvoices.length} Bills</Badge>
             </div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', marginTop: '10px', color: isDark ? '#f8fafc' : '#0f172a' }}>
+            <div className="text-3xl font-bold mt-3">
               <CurrencyText amount={retailRevenue} />
             </div>
-            <div style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#4b5563', marginTop: '4px' }}>
+            <div className="text-sm text-muted-foreground mt-1">
               Average Ticket Size:{' '}
               <CurrencyText
                 amount={retailInvoices.length > 0 ? retailRevenue / retailInvoices.length : 0}
@@ -168,117 +136,107 @@ export const AnalyticsPage: React.FC = () => {
 
           {/* Wholesale Channel Card */}
           <div
-            style={{
-              border: `1px solid ${isDark ? '#0284c7' : '#0972d3'}`,
-              borderRadius: '8px',
-              padding: '16px',
-              background: isDark ? '#0c4a6e' : '#f0f9ff',
-            }}
+            className={`border rounded-xl p-4 ${
+              isDark ? 'border-sky-700 bg-sky-950' : 'border-blue-500 bg-blue-50'
+            }`}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontWeight: 'bold', fontSize: '16px', color: isDark ? '#7dd3fc' : '#075985' }}>
+            <div className="flex justify-between items-center">
+              <div className={`font-bold text-lg ${isDark ? 'text-sky-400' : 'text-blue-800'}`}>
                 📦 Wholesale B2B Commercial
               </div>
-              <Badge color="blue">{wholesaleInvoices.length} Invoices</Badge>
+              <Badge variant="default" className="bg-blue-600 hover:bg-blue-700">{wholesaleInvoices.length} Invoices</Badge>
             </div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', marginTop: '10px', color: isDark ? '#f8fafc' : '#0f172a' }}>
+            <div className="text-3xl font-bold mt-3">
               <CurrencyText amount={wholesaleRevenue} />
             </div>
-            <div style={{ fontSize: '12px', color: isDark ? '#94a3b8' : '#4b5563', marginTop: '4px' }}>
+            <div className="text-sm text-muted-foreground mt-1">
               Average Ticket Size:{' '}
               <CurrencyText
                 amount={wholesaleInvoices.length > 0 ? wholesaleRevenue / wholesaleInvoices.length : 0}
               />
             </div>
           </div>
-        </Grid>
-      </Container>
+        </div>
+      </div>
 
       {/* Top Sellers vs Slow Movers */}
-      <Grid
-        gridDefinition={[
-          { colspan: { default: 12, m: 7 } },
-          { colspan: { default: 12, m: 5 } },
-        ]}
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Top Movers */}
-        <Container
-          header={
-            <Header variant="h2" description="Highest revenue generating products">
-              Top Selling Products
-            </Header>
-          }
-        >
-          <Table
-            columnDefinitions={[
-              {
-                id: 'product',
-                header: 'Product',
-                cell: (item) => (
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{item.name}</div>
-                    <div style={{ fontSize: '11px', color: '#6b7280' }}>SKU: {item.sku}</div>
-                  </div>
-                ),
-              },
-              {
-                id: 'units',
-                header: 'Units Sold',
-                cell: (item) => (
-                  <span style={{ fontWeight: 'bold' }}>{item.unitsSold}</span>
-                ),
-              },
-              {
-                id: 'revenue',
-                header: 'Revenue Generated',
-                cell: (item) => (
-                  <span style={{ fontWeight: 'bold', color: '#0972d3' }}>
-                    <CurrencyText amount={item.revenue} />
-                  </span>
-                ),
-              },
-            ]}
-            items={topSellers}
-            empty={<Box textAlign="center">No sales recorded yet.</Box>}
-          />
-        </Container>
+        <div className="lg:col-span-7 bg-card rounded-xl border shadow-sm flex flex-col">
+          <div className="p-4 border-b">
+            <h2 className="text-xl font-semibold">Top Selling Products</h2>
+            <p className="text-sm text-muted-foreground">Highest revenue generating products</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-muted text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Product</th>
+                  <th className="px-4 py-3 font-medium">Units Sold</th>
+                  <th className="px-4 py-3 font-medium">Revenue Generated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topSellers.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
+                      No sales recorded yet.
+                    </td>
+                  </tr>
+                ) : (
+                  topSellers.map((item, idx) => (
+                    <tr key={idx} className="border-t hover:bg-muted/50">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold">{item.name}</div>
+                        <div className="text-xs text-muted-foreground">SKU: {item.sku}</div>
+                      </td>
+                      <td className="px-4 py-3 font-bold">{item.unitsSold}</td>
+                      <td className="px-4 py-3 font-bold text-blue-600">
+                        <CurrencyText amount={item.revenue} />
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         {/* Dead Stock / Attention Needed */}
-        <Container
-          header={
-            <Header variant="h2" description="Products with zero recorded sales">
-              Dead Stock / Zero Movement
-            </Header>
-          }
-        >
-          {deadStock.length === 0 ? (
-            <Box textAlign="center" padding="m">All inventory items are actively moving!</Box>
-          ) : (
-            <Table
-              columnDefinitions={[
-                {
-                  id: 'name',
-                  header: 'Product',
-                  cell: (p) => (
-                    <div>
-                      <div style={{ fontWeight: 500 }}>{p.name}</div>
-                      <div style={{ fontSize: '11px', color: '#6b7280' }}>Stock: {p.stockQuantity}</div>
-                    </div>
-                  ),
-                },
-                {
-                  id: 'tiedCapital',
-                  header: 'Tied Capital',
-                  cell: (p) => (
-                    <CurrencyText amount={p.stockQuantity * p.costPrice} />
-                  ),
-                },
-              ]}
-              items={deadStock.slice(0, 5)}
-            />
-          )}
-        </Container>
-      </Grid>
-    </SpaceBetween>
+        <div className="lg:col-span-5 bg-card rounded-xl border shadow-sm flex flex-col">
+          <div className="p-4 border-b">
+            <h2 className="text-xl font-semibold">Dead Stock / Zero Movement</h2>
+            <p className="text-sm text-muted-foreground">Products with zero recorded sales</p>
+          </div>
+          <div className="overflow-x-auto">
+            {deadStock.length === 0 ? (
+              <div className="px-4 py-8 text-center text-muted-foreground">All inventory items are actively moving!</div>
+            ) : (
+              <table className="w-full text-sm text-left">
+                <thead className="bg-muted text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Product</th>
+                    <th className="px-4 py-3 font-medium">Tied Capital</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deadStock.slice(0, 5).map((p, idx) => (
+                    <tr key={idx} className="border-t hover:bg-muted/50">
+                      <td className="px-4 py-3">
+                        <div className="font-medium">{p.name}</div>
+                        <div className="text-xs text-muted-foreground">Stock: {p.stockQuantity}</div>
+                      </td>
+                      <td className="px-4 py-3 font-medium">
+                        <CurrencyText amount={p.stockQuantity * p.costPrice} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };

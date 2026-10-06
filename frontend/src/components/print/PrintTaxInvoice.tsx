@@ -1,7 +1,5 @@
 import React, { useRef } from 'react';
-import Box from '@cloudscape-design/components/box';
-import Button from '@cloudscape-design/components/button';
-import SpaceBetween from '@cloudscape-design/components/space-between';
+import { Button } from '../ui/button';
 import { Invoice } from '../../types/invoice';
 import { useAppStore } from '../../store/useAppStore';
 import { PrintService } from '../../services/printService';
@@ -29,14 +27,14 @@ export const PrintTaxInvoice: React.FC<PrintTaxInvoiceProps> = ({ invoice, onClo
 
   return (
     <div>
-      <Box margin={{ bottom: 'm' }}>
-        <SpaceBetween direction="horizontal" size="xs">
-          <Button variant="primary" iconName="download" onClick={handlePrint}>
+      <div className="mb-4">
+        <div className="flex items-center gap-2">
+          <Button onClick={handlePrint}>
             Print / Save as PDF (A4 Format)
           </Button>
-          {onClose && <Button onClick={onClose}>Close</Button>}
-        </SpaceBetween>
-      </Box>
+          {onClose && <Button variant="outline" onClick={onClose}>Close</Button>}
+        </div>
+      </div>
 
       {/* Formal A4 Document Container */}
       <div

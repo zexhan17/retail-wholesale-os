@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
-import Header from '@cloudscape-design/components/header';
-import Table from '@cloudscape-design/components/table';
-import Box from '@cloudscape-design/components/box';
-import Button from '@cloudscape-design/components/button';
-import SpaceBetween from '@cloudscape-design/components/space-between';
-import Input from '@cloudscape-design/components/input';
-import Modal from '@cloudscape-design/components/modal';
-import FormField from '@cloudscape-design/components/form-field';
-import Grid from '@cloudscape-design/components/grid';
+import { Plus, Search } from 'lucide-react';
 
 import { usePurchaseStore } from '../../store/usePurchaseStore';
 import { useAppStore } from '../../store/useAppStore';
 import { CurrencyText } from '../../components/common/CurrencyText';
 import { Supplier } from '../../types/purchase';
+
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Label } from '../../components/ui/label';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '../../components/ui/table';
+import { Card, CardContent } from '../../components/ui/card';
 
 export const SupplierListPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -108,161 +114,140 @@ export const SupplierListPage: React.FC = () => {
   };
 
   return (
-    <SpaceBetween size="l">
+    <div className="flex flex-col gap-6 p-4">
       {/* Header */}
-      <Header
-        variant="h1"
-        description="Vendor directory, accounts payable tracking, and purchase procurement."
-        actions={
-          <Button variant="primary" iconName="add-plus" onClick={openCreateModal}>
-            Add New Supplier
-          </Button>
-        }
-      >
-        🏭 Suppliers & Vendors (Accounts Payable)
-      </Header>
-
-      {/* Search Bar */}
-      <div
-        style={{
-          background: isDark ? '#1e293b' : '#ffffff',
-          padding: '16px',
-          borderRadius: '8px',
-          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-        }}
-      >
-        <div style={{ maxWidth: '400px' }}>
-          <Input
-            value={searchQuery}
-            onChange={({ detail }) => setSearchQuery(detail.value)}
-            placeholder="Search suppliers by name, contact, phone..."
-            type="search"
-          />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">🏭 Suppliers & Vendors (Accounts Payable)</h1>
+          <p className="text-muted-foreground mt-2">
+            Vendor directory, accounts payable tracking, and purchase procurement.
+          </p>
         </div>
+        <Button onClick={openCreateModal} className="shrink-0 gap-2">
+          <Plus className="w-4 h-4" />
+          Add New Supplier
+        </Button>
       </div>
 
+      {/* Search Bar */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search suppliers by name, contact, phone..."
+              className="pl-9"
+              type="search"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Table */}
-      <Table
-        columnDefinitions={[
-          {
-            id: 'name',
-            header: 'Supplier / Vendor',
-            cell: (s) => (
-              <div>
-                <div style={{ fontWeight: 600 }}>{s.name}</div>
-                {s.contactPerson && (
-                  <div style={{ fontSize: '11px', color: '#6b7280' }}>Contact: {s.contactPerson}</div>
-                )}
-              </div>
-            ),
-          },
-          {
-            id: 'contact',
-            header: 'Contact Info',
-            cell: (s) => (
-              <div>
-                <div>{s.phone}</div>
-                {s.email && <div style={{ fontSize: '11px', color: '#6b7280' }}>{s.email}</div>}
-              </div>
-            ),
-          },
-          {
-            id: 'terms',
-            header: 'Payment Terms',
-            cell: (s) => s.paymentTerms,
-          },
-          {
-            id: 'totalPurchased',
-            header: 'Total Purchases',
-            cell: (s) => (
-              <span style={{ fontWeight: 500 }}>
-                <CurrencyText amount={s.totalPurchased} />
-              </span>
-            ),
-          },
-          {
-            id: 'balance',
-            header: 'Payable Balance',
-            cell: (s) => (
-              <span
-                style={{
-                  fontWeight: 'bold',
-                  color: s.outstandingBalance > 0 ? '#dc2626' : '#16a34a',
-                }}
-              >
-                <CurrencyText amount={s.outstandingBalance} />
-              </span>
-            ),
-          },
-          {
-            id: 'actions',
-            header: 'Actions',
-            cell: (s) => (
-              <Button variant="inline-link" onClick={() => openEditModal(s)}>
-                Edit
-              </Button>
-            ),
-          },
-        ]}
-        items={filteredSuppliers}
-        empty={<Box textAlign="center" padding="l">No suppliers registered.</Box>}
-      />
+      <Card>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Supplier / Vendor</TableHead>
+                <TableHead>Contact Info</TableHead>
+                <TableHead>Payment Terms</TableHead>
+                <TableHead>Total Purchases</TableHead>
+                <TableHead>Payable Balance</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredSuppliers.length > 0 ? (
+                filteredSuppliers.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell>
+                      <div className="font-semibold">{s.name}</div>
+                      {s.contactPerson && (
+                        <div className="text-xs text-muted-foreground mt-1">Contact: {s.contactPerson}</div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div>{s.phone}</div>
+                      {s.email && <div className="text-xs text-muted-foreground mt-1">{s.email}</div>}
+                    </TableCell>
+                    <TableCell>{s.paymentTerms}</TableCell>
+                    <TableCell>
+                      <span className="font-medium">
+                        <CurrencyText amount={s.totalPurchased} />
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`font-bold ${s.outstandingBalance > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                        <CurrencyText amount={s.outstandingBalance} />
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="link" size="sm" onClick={() => openEditModal(s)} className="p-0 h-auto">
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    No suppliers registered.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
 
       {/* Add / Edit Supplier Modal */}
-      <Modal
-        visible={isAddModalOpen}
-        onDismiss={() => setIsAddModalOpen(false)}
-        header={editingSupplier ? `Edit Supplier: ${editingSupplier.name}` : 'Add New Supplier / Vendor'}
-        size="medium"
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-              <Button variant="primary" onClick={handleAddSubmit}>
-                Save Supplier
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        <SpaceBetween size="m">
-          <FormField label="Supplier Company Name">
-            <Input value={name} onChange={({ detail }) => setName(detail.value)} placeholder="e.g. Apex Agri Imports" />
-          </FormField>
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{editingSupplier ? `Edit Supplier: ${editingSupplier.name}` : 'Add New Supplier / Vendor'}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Supplier Company Name</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Apex Agri Imports" />
+            </div>
 
-          <Grid
-            gridDefinition={[
-              { colspan: { default: 12, m: 6 } },
-              { colspan: { default: 12, m: 6 } },
-            ]}
-          >
-            <FormField label="Contact Person">
-              <Input value={contactPerson} onChange={({ detail }) => setContactPerson(detail.value)} />
-            </FormField>
-            <FormField label="Phone Number">
-              <Input value={phone} onChange={({ detail }) => setPhone(detail.value)} />
-            </FormField>
-          </Grid>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="contactPerson">Contact Person</Label>
+                <Input id="contactPerson" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              </div>
+            </div>
 
-          <Grid
-            gridDefinition={[
-              { colspan: { default: 12, m: 6 } },
-              { colspan: { default: 12, m: 6 } },
-            ]}
-          >
-            <FormField label="Email">
-              <Input value={email} onChange={({ detail }) => setEmail(detail.value)} />
-            </FormField>
-            <FormField label="Payment Terms">
-              <Input value={paymentTerms} onChange={({ detail }) => setPaymentTerms(detail.value)} placeholder="e.g. Net 30" />
-            </FormField>
-          </Grid>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="paymentTerms">Payment Terms</Label>
+                <Input id="paymentTerms" value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} placeholder="e.g. Net 30" />
+              </div>
+            </div>
 
-          <FormField label="Address">
-            <Input value={address} onChange={({ detail }) => setAddress(detail.value)} />
-          </FormField>
-        </SpaceBetween>
-      </Modal>
-    </SpaceBetween>
+            <div className="grid gap-2">
+              <Label htmlFor="address">Address</Label>
+              <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddSubmit}>Save Supplier</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };

@@ -1,17 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '@cloudscape-design/components/header';
-import Table from '@cloudscape-design/components/table';
-import Box from '@cloudscape-design/components/box';
-import Button from '@cloudscape-design/components/button';
-import SpaceBetween from '@cloudscape-design/components/space-between';
-import Input from '@cloudscape-design/components/input';
-import Modal from '@cloudscape-design/components/modal';
-import FormField from '@cloudscape-design/components/form-field';
-import Grid from '@cloudscape-design/components/grid';
-import Select from '@cloudscape-design/components/select';
-import SegmentedControl from '@cloudscape-design/components/segmented-control';
-import Badge from '@cloudscape-design/components/badge';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Label } from '../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Badge } from '../../components/ui/badge';
 
 import { useCustomerStore } from '../../store/useCustomerStore';
 import { useAppStore } from '../../store/useAppStore';
@@ -21,8 +15,6 @@ import { CurrencyText } from '../../components/common/CurrencyText';
 export const CustomerListPage: React.FC = () => {
   const navigate = useNavigate();
   const profile = useAppStore((state) => state.profile);
-  const theme = useAppStore((state) => state.theme);
-  const isDark = theme === 'dark';
   const addNotification = useAppStore((state) => state.addNotification);
 
   const customers = useCustomerStore((state) => state.customers);
@@ -160,322 +152,305 @@ export const CustomerListPage: React.FC = () => {
   };
 
   return (
-    <SpaceBetween size="l">
+    <div className="flex flex-col gap-6 p-6">
       {/* Header */}
-      <Header
-        variant="h1"
-        description="Maintain retail loyalty shoppers and wholesale commercial accounts with credit limits and Khata ledger."
-        actions={
-          <Button variant="primary" iconName="add-plus" onClick={openCreateModal}>
-            Add New Customer / Account
-          </Button>
-        }
-      >
-        👥 Customers & Khata Ledger Accounts
-      </Header>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">👥 Customers & Khata Ledger Accounts</h1>
+          <p className="text-muted-foreground mt-2">
+            Maintain retail loyalty shoppers and wholesale commercial accounts with credit limits and Khata ledger.
+          </p>
+        </div>
+        <Button onClick={openCreateModal}>
+          Add New Customer / Account
+        </Button>
+      </div>
 
       {/* Filter Bar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '12px',
-          flexWrap: 'wrap',
-          background: isDark ? '#1e293b' : '#ffffff',
-          padding: '16px',
-          borderRadius: '8px',
-          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-        }}
-      >
-        <div style={{ flex: 1, minWidth: '240px' }}>
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-card p-4 rounded-xl border shadow-sm">
+        <div className="w-full sm:w-72">
           <Input
             value={searchQuery}
-            onChange={({ detail }) => setSearchQuery(detail.value)}
-            placeholder="Search by customer, company name, phone, or Tax ID..."
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by customer, company, phone, tax ID..."
             type="search"
           />
         </div>
 
-        <SegmentedControl
-          selectedId={typeFilter}
-          onChange={({ detail }) => setTypeFilter(detail.selectedId as any)}
-          options={[
-            { id: 'all', text: 'All Customers' },
-            { id: 'wholesale', text: '📦 Wholesale Accounts' },
-            { id: 'retail', text: '⚡ Retail Shoppers' },
-          ]}
-        />
+        <div className="flex bg-muted p-1 rounded-md">
+          <Button
+            variant={typeFilter === 'all' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setTypeFilter('all')}
+          >
+            All
+          </Button>
+          <Button
+            variant={typeFilter === 'wholesale' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setTypeFilter('wholesale')}
+          >
+            📦 Wholesale
+          </Button>
+          <Button
+            variant={typeFilter === 'retail' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setTypeFilter('retail')}
+          >
+            ⚡ Retail
+          </Button>
+        </div>
       </div>
 
       {/* Customers Table */}
-      <Table
-        columnDefinitions={[
-          {
-            id: 'name',
-            header: 'Customer / Business Name',
-            cell: (c) => (
-              <div>
-                <div style={{ fontWeight: 600 }}>{c.companyName || c.name}</div>
-                {c.companyName && <div style={{ fontSize: '11px', color: '#6b7280' }}>Contact: {c.name}</div>}
-                {c.taxId && <div style={{ fontSize: '11px', color: '#0972d3' }}>Tax ID: {c.taxId}</div>}
-              </div>
-            ),
-          },
-          {
-            id: 'type',
-            header: 'Account Type',
-            cell: (c) => (
-              <Badge color={c.type === 'wholesale' ? 'blue' : 'green'}>
-                {c.type === 'wholesale' ? 'B2B Wholesale' : 'Retail Walk-in/Loyalty'}
-              </Badge>
-            ),
-          },
-          {
-            id: 'contact',
-            header: 'Phone / Email',
-            cell: (c) => (
-              <div>
-                <div>{c.phone}</div>
-                {c.email && <div style={{ fontSize: '11px', color: '#6b7280' }}>{c.email}</div>}
-              </div>
-            ),
-          },
-          {
-            id: 'tier',
-            header: 'Tier & Terms',
-            cell: (c) => (
-              <div>
-                <div style={{ fontWeight: 500, textTransform: 'uppercase', fontSize: '12px' }}>
-                  {c.tier} Tier
-                </div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>
-                  {c.paymentTerms === 'cod' ? 'Cash On Delivery' : c.paymentTerms.toUpperCase().replace('_', ' ')}
-                </div>
-              </div>
-            ),
-          },
-          {
-            id: 'balance',
-            header: 'Khata Outstanding Balance',
-            cell: (c) => (
-              <div>
-                <div
-                  style={{
-                    fontWeight: 'bold',
-                    fontSize: '14px',
-                    color: c.currentBalance > 0 ? '#dc2626' : '#16a34a',
-                  }}
-                >
-                  <CurrencyText amount={c.currentBalance} />
-                </div>
-                {c.creditLimit > 0 && (
-                  <div style={{ fontSize: '11px', color: '#6b7280' }}>
-                    Limit: <CurrencyText amount={c.creditLimit} />
-                  </div>
-                )}
-              </div>
-            ),
-          },
-          {
-            id: 'actions',
-            header: 'Actions',
-            cell: (c) => (
-              <SpaceBetween direction="horizontal" size="xs">
-                <Button
-                  variant="inline-link"
-                  onClick={() => openEditModal(c)}
-                >
-                  Edit
-                </Button>
-                {c.type === 'wholesale' && (
-                  <Button
-                    variant="inline-link"
-                    onClick={() => navigate(`/customers/${c.id}/ledger`)}
-                  >
-                    View Khata Ledger
-                  </Button>
-                )}
-                {c.currentBalance > 0 && (
-                  <Button
-                    variant="inline-link"
-                    onClick={() => {
-                      setPaymentCustomer(c);
-                      setPaymentAmount(c.currentBalance.toString());
-                    }}
-                  >
-                    Collect Pay
-                  </Button>
-                )}
-              </SpaceBetween>
-            ),
-          },
-        ]}
-        items={filteredCustomers}
-        empty={<Box textAlign="center" padding="l">No customer records found.</Box>}
-      />
+      <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-muted text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 font-medium">Customer / Business Name</th>
+                <th className="px-4 py-3 font-medium">Account Type</th>
+                <th className="px-4 py-3 font-medium">Phone / Email</th>
+                <th className="px-4 py-3 font-medium">Tier & Terms</th>
+                <th className="px-4 py-3 font-medium">Khata Outstanding Balance</th>
+                <th className="px-4 py-3 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCustomers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                    No customer records found.
+                  </td>
+                </tr>
+              ) : (
+                filteredCustomers.map((c) => (
+                  <tr key={c.id} className="border-t hover:bg-muted/50">
+                    <td className="px-4 py-3">
+                      <div className="font-semibold">{c.companyName || c.name}</div>
+                      {c.companyName && <div className="text-xs text-muted-foreground">Contact: {c.name}</div>}
+                      {c.taxId && <div className="text-xs text-blue-600">Tax ID: {c.taxId}</div>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={c.type === 'wholesale' ? 'default' : 'secondary'}>
+                        {c.type === 'wholesale' ? 'B2B Wholesale' : 'Retail Walk-in/Loyalty'}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>{c.phone}</div>
+                      {c.email && <div className="text-xs text-muted-foreground">{c.email}</div>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium uppercase text-xs">{c.tier} Tier</div>
+                      <div className="text-xs text-muted-foreground">
+                        {c.paymentTerms === 'cod' ? 'Cash On Delivery' : c.paymentTerms.toUpperCase().replace('_', ' ')}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div
+                        className={`font-bold text-sm ${c.currentBalance > 0 ? 'text-destructive' : 'text-green-600'}`}
+                      >
+                        <CurrencyText amount={c.currentBalance} />
+                      </div>
+                      {c.creditLimit > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          Limit: <CurrencyText amount={c.creditLimit} />
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end items-center gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => openEditModal(c)}>
+                          Edit
+                        </Button>
+                        {c.type === 'wholesale' && (
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/customers/${c.id}/ledger`)}>
+                            Ledger
+                          </Button>
+                        )}
+                        {c.currentBalance > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700"
+                            onClick={() => {
+                              setPaymentCustomer(c);
+                              setPaymentAmount(c.currentBalance.toString());
+                            }}
+                          >
+                            Collect Pay
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Add / Edit Customer Modal */}
-      <Modal
-        visible={isAddModalOpen}
-        onDismiss={() => setIsAddModalOpen(false)}
-        header={editingCustomer ? `Edit Customer: ${editingCustomer.name}` : 'Register New Customer / Account'}
-        size="large"
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-              <Button variant="primary" onClick={handleAddSubmit}>
-                Save Customer
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        <SpaceBetween size="m">
-          <FormField label="Account Type">
-            <SegmentedControl
-              selectedId={newType}
-              onChange={({ detail }) => setNewType(detail.selectedId as CustomerType)}
-              options={[
-                { id: 'wholesale', text: '📦 Wholesale Commercial (B2B)' },
-                { id: 'retail', text: '⚡ Retail Individual Shopper' },
-              ]}
-            />
-          </FormField>
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingCustomer ? `Edit Customer: ${editingCustomer.name}` : 'Register New Customer / Account'}
+            </DialogTitle>
+          </DialogHeader>
 
-          <Grid
-            gridDefinition={[
-              { colspan: { default: 12, m: 6 } },
-              { colspan: { default: 12, m: 6 } },
-            ]}
-          >
-            <FormField label={newType === 'wholesale' ? 'Contact Person Name' : 'Full Name'}>
-              <Input value={name} onChange={({ detail }) => setName(detail.value)} placeholder="e.g. John Smith" />
-            </FormField>
-
-            {newType === 'wholesale' && (
-              <FormField label="Company / Entity Business Name">
-                <Input
-                  value={companyName}
-                  onChange={({ detail }) => setCompanyName(detail.value)}
-                  placeholder="e.g. Acme Supermarket Corp"
-                />
-              </FormField>
-            )}
-
-            <FormField label="Phone Number">
-              <Input value={phone} onChange={({ detail }) => setPhone(detail.value)} placeholder="e.g. +1 555-0199" />
-            </FormField>
-
-            <FormField label="Email Address">
-              <Input value={email} onChange={({ detail }) => setEmail(detail.value)} placeholder="e.g. billing@acme.com" />
-            </FormField>
-          </Grid>
-
-          {newType === 'wholesale' && (
-            <Grid
-              gridDefinition={[
-                { colspan: { default: 12, m: 4 } },
-                { colspan: { default: 6, m: 4 } },
-                { colspan: { default: 6, m: 4 } },
-              ]}
-            >
-              <FormField label="Tax Registration ID (GSTIN/VAT)">
-                <Input value={taxId} onChange={({ detail }) => setTaxId(detail.value)} placeholder="e.g. TAX-US-998811" />
-              </FormField>
-
-              <FormField label="Credit Limit">
-                <Input
-                  value={creditLimit}
-                  type="number"
-                  onChange={({ detail }) => setCreditLimit(detail.value)}
-                />
-              </FormField>
-
-              <FormField label="Payment Terms">
-                <Select
-                  selectedOption={{
-                    label:
-                      paymentTerms === 'net_30'
-                        ? 'Net 30 Days'
-                        : paymentTerms === 'net_15'
-                        ? 'Net 15 Days'
-                        : paymentTerms === 'net_7'
-                        ? 'Net 7 Days'
-                        : 'Cash on Delivery',
-                    value: paymentTerms,
-                  }}
-                  onChange={({ detail }) => setPaymentTerms(detail.selectedOption.value as any)}
-                  options={[
-                    { label: 'Net 30 Days', value: 'net_30' },
-                    { label: 'Net 15 Days', value: 'net_15' },
-                    { label: 'Net 7 Days', value: 'net_7' },
-                    { label: 'Cash on Delivery', value: 'cod' },
-                  ]}
-                />
-              </FormField>
-            </Grid>
-          )}
-        </SpaceBetween>
-      </Modal>
-
-      {/* Collect Payment Modal */}
-      <Modal
-        visible={!!paymentCustomer}
-        onDismiss={() => setPaymentCustomer(null)}
-        header={`Collect Payment from ${paymentCustomer?.companyName || paymentCustomer?.name}`}
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setPaymentCustomer(null)}>Cancel</Button>
-              <Button variant="primary" onClick={handlePaymentSubmit}>
-                Confirm Payment & Update Khata
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        {paymentCustomer && (
-          <SpaceBetween size="m">
-            <div>
-              Outstanding Khata Balance:{' '}
-              <span style={{ color: '#dc2626', fontWeight: 'bold' }}>
-                <CurrencyText amount={paymentCustomer.currentBalance} />
-              </span>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Account Type</Label>
+              <div className="flex bg-muted p-1 rounded-md w-fit">
+                <Button
+                  type="button"
+                  variant={newType === 'wholesale' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setNewType('wholesale')}
+                >
+                  📦 Wholesale Commercial (B2B)
+                </Button>
+                <Button
+                  type="button"
+                  variant={newType === 'retail' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setNewType('retail')}
+                >
+                  ⚡ Retail Individual Shopper
+                </Button>
+              </div>
             </div>
 
-            <FormField label="Payment Amount">
-              <Input
-                value={paymentAmount}
-                type="number"
-                onChange={({ detail }) => setPaymentAmount(detail.value)}
-              />
-            </FormField>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>{newType === 'wholesale' ? 'Contact Person Name' : 'Full Name'}</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. John Smith" />
+              </div>
 
-            <FormField label="Payment Channel">
-              <Select
-                selectedOption={{ label: paymentMethod.toUpperCase(), value: paymentMethod }}
-                onChange={({ detail }) => setPaymentMethod(detail.selectedOption.value as string)}
-                options={[
-                  { label: 'BANK WIRE / RTGS', value: 'bank_transfer' },
-                  { label: 'CASH', value: 'cash' },
-                  { label: 'CHEQUE', value: 'cheque' },
-                  { label: 'UPI / DIGITAL', value: 'upi' },
-                ]}
-              />
-            </FormField>
+              {newType === 'wholesale' && (
+                <div className="grid gap-2">
+                  <Label>Company / Entity Business Name</Label>
+                  <Input
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="e.g. Acme Supermarket Corp"
+                  />
+                </div>
+              )}
 
-            <FormField label="Reference / Cheque Number">
-              <Input
-                value={paymentReference}
-                onChange={({ detail }) => setPaymentReference(detail.value)}
-                placeholder="e.g. WIRE-88129 or CHQ-4401"
-              />
-            </FormField>
-          </SpaceBetween>
-        )}
-      </Modal>
-    </SpaceBetween>
+              <div className="grid gap-2">
+                <Label>Phone Number</Label>
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. +1 555-0199" />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Email Address</Label>
+                <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g. billing@acme.com" />
+              </div>
+            </div>
+
+            {newType === 'wholesale' && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                  <Label>Tax Registration ID (GSTIN/VAT)</Label>
+                  <Input value={taxId} onChange={(e) => setTaxId(e.target.value)} placeholder="e.g. TAX-US-998811" />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Credit Limit</Label>
+                  <Input
+                    value={creditLimit}
+                    type="number"
+                    onChange={(e) => setCreditLimit(e.target.value)}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Payment Terms</Label>
+                  <Select value={paymentTerms} onValueChange={(val: any) => setPaymentTerms(val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select terms" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="net_30">Net 30 Days</SelectItem>
+                      <SelectItem value="net_15">Net 15 Days</SelectItem>
+                      <SelectItem value="net_7">Net 7 Days</SelectItem>
+                      <SelectItem value="cod">Cash on Delivery</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddSubmit}>Save Customer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Collect Payment Modal */}
+      <Dialog open={!!paymentCustomer} onOpenChange={(open) => !open && setPaymentCustomer(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Collect Payment from {paymentCustomer?.companyName || paymentCustomer?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          {paymentCustomer && (
+            <div className="grid gap-4 py-4">
+              <div className="text-sm">
+                Outstanding Khata Balance:{' '}
+                <span className="text-destructive font-bold text-lg">
+                  <CurrencyText amount={paymentCustomer.currentBalance} />
+                </span>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Payment Amount</Label>
+                <Input
+                  value={paymentAmount}
+                  type="number"
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Payment Channel</Label>
+                <Select value={paymentMethod} onValueChange={(val) => val && setPaymentMethod(val)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bank_transfer">BANK WIRE / RTGS</SelectItem>
+                    <SelectItem value="cash">CASH</SelectItem>
+                    <SelectItem value="cheque">CHEQUE</SelectItem>
+                    <SelectItem value="upi">UPI / DIGITAL</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Reference / Cheque Number</Label>
+                <Input
+                  value={paymentReference}
+                  onChange={(e) => setPaymentReference(e.target.value)}
+                  placeholder="e.g. WIRE-88129 or CHQ-4401"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPaymentCustomer(null)}>Cancel</Button>
+            <Button onClick={handlePaymentSubmit}>Confirm Payment & Update Khata</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };

@@ -1,253 +1,215 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import AppLayout from '@cloudscape-design/components/app-layout';
-import TopNavigation from '@cloudscape-design/components/top-navigation';
-import SideNavigation from '@cloudscape-design/components/side-navigation';
-import Flashbar from '@cloudscape-design/components/flashbar';
-import Modal from '@cloudscape-design/components/modal';
-import Box from '@cloudscape-design/components/box';
-import Button from '@cloudscape-design/components/button';
-import SpaceBetween from '@cloudscape-design/components/space-between';
-import StatusIndicator from '@cloudscape-design/components/status-indicator';
-import { applyMode, Mode } from '@cloudscape-design/global-styles';
-
+import React, { useEffect, useState, useMemo } from 'react';
+import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  ShoppingCart, 
+  FileText, 
+  Tags, 
+  Settings2, 
+  Users, 
+  Factory,
+  ClipboardList,
+  BarChart3,
+  Moon,
+  Sun,
+  Menu,
+  X,
+  Bell,
+  PackageSearch
+} from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
-import { useProductStore } from '../store/useProductStore';
 
 export const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const profile = useAppStore((state) => state.profile);
   const theme = useAppStore((state) => state.theme);
   const setTheme = useAppStore((state) => state.setTheme);
-  const notifications = useAppStore((state) => state.notifications);
-  const dismissNotification = useAppStore((state) => state.dismissNotification);
-
-  // Directly select products to keep Zustand getSnapshot pure and cached
-  const products = useProductStore((state) => state.products);
-  const lowStockProducts = useMemo(
-    () => products.filter((p) => p.stockQuantity <= p.reorderLevel),
-    [products]
-  );
-  const lowStockCount = lowStockProducts.length;
-
-  const [isLowStockModalOpen, setIsLowStockModalOpen] = useState(false);
-  const [navigationOpen, setNavigationOpen] = useState(() => {
-    return typeof window !== 'undefined' ? window.innerWidth >= 992 && location.pathname !== '/pos' : false;
+  
+  // Dummy values to replace cloudscape hooks
+  const profile = { storeName: 'OmniStore OS' };
+  const lowStockCount = 0; 
+  
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024;
+    }
+    return true;
   });
-
-  // Auto-close side drawer when navigating routes on mobile screens
+  
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 992) {
-      setNavigationOpen(false);
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setSidebarOpen(false);
     }
   }, [location.pathname]);
 
-  const toggleTheme = useCallback(() => {
-    const nextTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(nextTheme);
-    applyMode(nextTheme === 'dark' ? Mode.Dark : Mode.Light);
-  }, [theme, setTheme]);
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
 
-  const navItems = useMemo(
-    () => [
-      { type: 'link' as const, text: 'Dashboard & Overview', href: '/' },
-      {
-        type: 'section' as const,
-        text: 'Sales & Transactions',
-        items: [
-          { type: 'link' as const, text: '⚡ Retail Quick POS', href: '/pos' },
-          { type: 'link' as const, text: '📦 Wholesale B2B Billing', href: '/wholesale/billing' },
-          { type: 'link' as const, text: '📄 Invoices & Orders', href: '/invoices' },
-        ],
-      },
-      {
-        type: 'section' as const,
-        text: 'Inventory & Catalog',
-        items: [
-          { type: 'link' as const, text: '🏷️ Products & Dual Pricing', href: '/products' },
-          { type: 'link' as const, text: '⚖️ Stock Adjustments', href: '/stock-adjustments' },
-        ],
-      },
-      {
-        type: 'section' as const,
-        text: 'Parties & Khata Ledger',
-        items: [
-          { type: 'link' as const, text: '👥 Customers & Credit (Khata)', href: '/customers' },
-          { type: 'link' as const, text: '🏭 Suppliers & Vendors', href: '/suppliers' },
-          { type: 'link' as const, text: '📋 Purchase Orders (Inward)', href: '/purchases' },
-        ],
-      },
-      {
-        type: 'section' as const,
-        text: 'Reconciliation & Reports',
-        items: [
-          { type: 'link' as const, text: '💰 Day-End Z-Report (Cash Drawer)', href: '/reports/day-end' },
-          { type: 'link' as const, text: '📊 Sales & Margin Analytics', href: '/reports/analytics' },
-        ],
-      },
-      { type: 'divider' as const },
-      { type: 'link' as const, text: '⚙️ Settings & Database Backup', href: '/settings' },
-    ],
-    []
-  );
+  const navSections = [
+    {
+      title: 'Dashboard & Overview',
+      items: [{ name: 'Dashboard', href: '/', icon: LayoutDashboard }],
+    },
+    {
+      title: 'Sales & Transactions',
+      items: [
+        { name: 'Retail Quick POS', href: '/pos', icon: ShoppingCart },
+        { name: 'Wholesale B2B Billing', href: '/wholesale/billing', icon: PackageSearch },
+        { name: 'Invoices & Orders', href: '/invoices', icon: FileText },
+      ],
+    },
+    {
+      title: 'Inventory & Catalog',
+      items: [
+        { name: 'Products & Pricing', href: '/products', icon: Tags },
+        { name: 'Stock Adjustments', href: '/stock-adjustments', icon: Settings2 },
+      ],
+    },
+    {
+      title: 'Parties & Khata Ledger',
+      items: [
+        { name: 'Customers (Khata)', href: '/customers', icon: Users },
+        { name: 'Suppliers & Vendors', href: '/suppliers', icon: Factory },
+        { name: 'Purchase Orders', href: '/purchases', icon: ClipboardList },
+      ],
+    },
+    {
+      title: 'Reconciliation & Reports',
+      items: [
+        { name: 'Day-End Z-Report', href: '/reports/day-end', icon: ClipboardList },
+        { name: 'Sales Analytics', href: '/reports/analytics', icon: BarChart3 },
+      ],
+    },
+  ];
 
-  const identity = useMemo(
-    () => ({
-      href: '/',
-      title: profile.storeName,
-      logo: {
-        src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230972d3"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>',
-        alt: 'OmniStore OS Logo',
-      },
-      onFollow: (e: any) => {
-        e.preventDefault();
-        navigate('/');
-      },
-    }),
-    [profile.storeName, navigate]
-  );
-
-  const utilities = useMemo(
-    () => [
-      {
-        type: 'button' as const,
-        text: '⚡ Open POS Counter',
-        iconName: 'external' as const,
-        onClick: () => navigate('/pos'),
-      },
-      {
-        type: 'button' as const,
-        iconName: 'notification' as const,
-        ariaLabel: 'Low Stock Alerts',
-        badge: lowStockCount > 0,
-        text: lowStockCount > 0 ? `${lowStockCount} Low Stock` : undefined,
-        onClick: () => setIsLowStockModalOpen(true),
-      },
-      {
-        type: 'button' as const,
-        iconName: 'settings' as const,
-        text: theme === 'dark' ? 'Switch to Light' : 'Switch to Dark',
-        onClick: toggleTheme,
-      },
-      {
-        type: 'menu-dropdown' as const,
-        text: 'Admin Operator',
-        iconName: 'user-profile' as const,
-        items: [
-          { id: 'settings', text: 'Store Configuration' },
-          { id: 'pos', text: 'Launch POS' },
-          { id: 'wholesale', text: 'New Wholesale Invoice' },
-        ],
-        onItemClick: (e: any) => {
-          if (e.detail.id === 'settings') navigate('/settings');
-          if (e.detail.id === 'pos') navigate('/pos');
-          if (e.detail.id === 'wholesale') navigate('/wholesale/billing');
-        },
-      },
-    ],
-    [lowStockCount, theme, toggleTheme, navigate]
-  );
+  const isPosRoute = location.pathname === '/pos';
 
   return (
-    <div style={{ minHeight: '100vh', background: theme === 'dark' ? '#0f172a' : '#f8fafc' }}>
-      {/* Cloudscape Top Navigation with memoized props */}
-      <TopNavigation identity={identity} utilities={utilities} />
+    <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
+      
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      {/* Cloudscape AppLayout Shell */}
-      <AppLayout
-        maxContentWidth={Number.MAX_VALUE}
-        disableContentPaddings={location.pathname === '/pos'}
-        navigationOpen={navigationOpen}
-        onNavigationChange={({ detail }) => setNavigationOpen(detail.open)}
-        navigation={
-          <SideNavigation
-            activeHref={location.pathname}
-            header={{ href: '/', text: 'OmniStore Modules' }}
-            items={navItems}
-            onFollow={(e) => {
-              e.preventDefault();
-              navigate(e.detail.href);
-            }}
-          />
-        }
-        notifications={
-          notifications.length > 0 ? (
-            <Flashbar
-              items={notifications.map((n) => ({
-                type: n.type,
-                header: n.header,
-                content: n.content,
-                dismissible: n.dismissible,
-                id: n.id,
-                onDismiss: () => dismissNotification(n.id),
-              }))}
-            />
-          ) : undefined
-        }
-        content={<Outlet />}
-        toolsHide={true}
-      />
-
-      {/* Low Stock Quick Alert Modal */}
-      <Modal
-        visible={isLowStockModalOpen}
-        onDismiss={() => setIsLowStockModalOpen(false)}
-        header={`Low Stock Inventory Alerts (${lowStockCount} items)`}
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs">
-              <Button onClick={() => setIsLowStockModalOpen(false)}>Close</Button>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setIsLowStockModalOpen(false);
-                  navigate('/purchases');
-                }}
-              >
-                Create Purchase Order
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-      >
-        {lowStockProducts.length === 0 ? (
-          <Box textAlign="center" padding="l">
-            <StatusIndicator type="success">All inventory items are well stocked!</StatusIndicator>
-          </Box>
-        ) : (
-          <SpaceBetween size="s">
-            <Box color="text-body-secondary">
-              The following products are currently at or below their configured reorder thresholds:
-            </Box>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ textAlign: 'left', borderBottom: `1px solid ${theme === 'dark' ? '#334155' : '#e5e7eb'}` }}>
-                  <th style={{ padding: '6px' }}>Product</th>
-                  <th style={{ padding: '6px' }}>SKU</th>
-                  <th style={{ padding: '6px', textAlign: 'center' }}>Current Stock</th>
-                  <th style={{ padding: '6px', textAlign: 'center' }}>Reorder Level</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lowStockProducts.map((p) => (
-                  <tr key={p.id} style={{ borderBottom: `1px solid ${theme === 'dark' ? '#1e293b' : '#f3f4f6'}` }}>
-                    <td style={{ padding: '6px', fontWeight: 600 }}>{p.name}</td>
-                    <td style={{ padding: '6px', color: theme === 'dark' ? '#94a3b8' : '#6b7280' }}>{p.sku}</td>
-                    <td style={{ padding: '6px', textAlign: 'center', color: '#dc2626', fontWeight: 'bold' }}>
-                      {p.stockQuantity} {p.primaryUnit}s
-                    </td>
-                    <td style={{ padding: '6px', textAlign: 'center', color: theme === 'dark' ? '#94a3b8' : '#6b7280' }}>
-                      {p.reorderLevel} {p.primaryUnit}s
-                    </td>
-                  </tr>
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-200 ease-in-out lg:relative ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:hidden'}`}>
+        <div className="h-14 flex items-center px-4 border-b border-border justify-between">
+          <Link to="/" className="font-bold text-lg text-primary flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center font-black">
+              O
+            </div>
+            {profile.storeName}
+          </Link>
+          <button className="lg:hidden text-muted-foreground hover:text-foreground" onClick={() => setSidebarOpen(false)}>
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div className="overflow-y-auto h-[calc(100vh-3.5rem)] py-4 px-3 space-y-6">
+          {navSections.map((section, idx) => (
+            <div key={idx}>
+              <h3 className="mb-2 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                {section.title}
+              </h3>
+              <div className="space-y-1">
+                {section.items.map((item) => (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={`flex items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors ${
+                      location.pathname === item.href 
+                        ? 'bg-primary/10 text-primary' 
+                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                    }`}
+                  >
+                    <item.icon size={18} />
+                    {item.name}
+                  </Link>
                 ))}
-              </tbody>
-            </table>
-          </SpaceBetween>
-        )}
-      </Modal>
+              </div>
+            </div>
+          ))}
+          <div>
+            <div className="h-px bg-border my-4" />
+            <Link
+              to="/settings"
+              className={`flex items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors ${
+                location.pathname === '/settings' 
+                  ? 'bg-primary/10 text-primary' 
+                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+              }`}
+            >
+              <Settings2 size={18} />
+              Settings
+            </Link>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        
+        {/* Top Header */}
+        <header className="h-14 flex items-center justify-between px-4 border-b border-border bg-card">
+          <div className="flex items-center gap-4">
+            <button 
+              className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-secondary"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              <Menu size={24} />
+            </button>
+            <h1 className="font-semibold text-lg hidden sm:block">
+              {navSections.flatMap(s => s.items).find(i => i.href === location.pathname)?.name || 'Dashboard'}
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button 
+              onClick={() => navigate('/pos')}
+              className="hidden sm:flex items-center gap-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              <ShoppingCart size={16} />
+              Open POS
+            </button>
+            
+            <button className="relative p-2 text-muted-foreground hover:bg-secondary rounded-full transition-colors">
+              <Bell size={20} />
+              {lowStockCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full"></span>
+              )}
+            </button>
+
+            <button 
+              onClick={toggleTheme}
+              className="p-2 text-muted-foreground hover:bg-secondary rounded-full transition-colors"
+            >
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className={`flex-1 overflow-auto ${isPosRoute ? 'p-0' : 'p-4 sm:p-6 lg:p-8 bg-muted/20'}`}>
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };
