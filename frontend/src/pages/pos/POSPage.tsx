@@ -19,7 +19,23 @@ import { Label } from '../../components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Card } from '../../components/ui/card';
 
-import { Minus, Plus, Trash2, ArrowRightLeft, CreditCard, ShoppingCart } from 'lucide-react';
+import {
+  Minus,
+  Plus,
+  Trash2,
+  ArrowRightLeft,
+  CreditCard,
+  ShoppingCart,
+  Volume2,
+  VolumeX,
+  History,
+  UserPlus,
+  Percent,
+  PlusCircle,
+  Keyboard,
+  Receipt,
+} from 'lucide-react';
+import { soundEffects } from '../../utils/soundEffects';
 
 export const POSPage: React.FC = () => {
   const profile = useAppStore((state) => state.profile);
@@ -72,6 +88,10 @@ export const POSPage: React.FC = () => {
   const getProductByBarcode = useProductStore((state) => state.getProductByBarcode);
   const customers = useCustomerStore((state) => state.customers);
   const createInvoice = useSalesStore((state) => state.createInvoice);
+  const invoices = useSalesStore((state) => state.invoices);
+  const recentSales = useMemo(() => {
+    return invoices.filter((i) => i.type === 'retail').slice(0, 10);
+  }, [invoices]);
 
   // Cart Store
   const {
@@ -89,6 +109,8 @@ export const POSPage: React.FC = () => {
     discardHeldCart,
     heldCarts,
     getTotals,
+    overallDiscountPercentage,
+    setOverallDiscount,
   } = useCartStore();
 
   const totals = getTotals();
@@ -130,6 +152,33 @@ export const POSPage: React.FC = () => {
   const [isHeldModalOpen, setIsHeldModalOpen] = useState(false);
   const [completedInvoice, setCompletedInvoice] = useState<Invoice | null>(null);
 
+  // Advanced Feature Modals State
+  const [soundEnabled, setSoundEnabled] = useState(() => soundEffects.isEnabled());
+  const toggleSound = () => {
+    const next = !soundEnabled;
+    soundEffects.setEnabled(next);
+    setSoundEnabled(next);
+    if (next) soundEffects.playScanBeep();
+  };
+
+  const [isRecentSalesOpen, setIsRecentSalesOpen] = useState(false);
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  const [isOrderDiscountOpen, setIsOrderDiscountOpen] = useState(false);
+  const [orderDiscountValue, setOrderDiscountValue] = useState('0');
+  const [isCustomItemOpen, setIsCustomItemOpen] = useState(false);
+  const [customItemName, setCustomItemName] = useState('');
+  const [customItemPrice, setCustomItemPrice] = useState('');
+  const [customItemQty, setCustomItemQty] = useState('1');
+  const [customItemTax, setCustomItemTax] = useState('0');
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [itemDiscountTarget, setItemDiscountTarget] = useState<string | null>(null);
+  const [lineDiscountValue, setLineDiscountValue] = useState('0');
+
+  // New Customer State
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerEmail, setNewCustomerEmail] = useState('');
+
   // Payment Form State
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'upi'>('cash');
   const [tenderedAmount, setTenderedAmount] = useState<string>('');
@@ -163,6 +212,7 @@ export const POSPage: React.FC = () => {
     const matched = getProductByBarcode(q);
     if (matched) {
       if (matched.stockQuantity <= 0) {
+        soundEffects.playWarning();
         addNotification({
           type: 'error',
           header: 'Out of Stock',
@@ -170,6 +220,7 @@ export const POSPage: React.FC = () => {
         });
       } else {
         addItem(matched, 1, 'primary');
+        soundEffects.playScanBeep();
         setSearchQuery('');
         addNotification({
           type: 'success',
@@ -181,6 +232,7 @@ export const POSPage: React.FC = () => {
       if (filteredProducts.length === 1) {
         const item = filteredProducts[0];
         if (item.stockQuantity <= 0) {
+          soundEffects.playWarning();
           addNotification({
             type: 'error',
             header: 'Out of Stock',
@@ -188,6 +240,7 @@ export const POSPage: React.FC = () => {
           });
         } else {
           addItem(item, 1, 'primary');
+          soundEffects.playScanBeep();
           setSearchQuery('');
           addNotification({
             type: 'success',
@@ -196,6 +249,7 @@ export const POSPage: React.FC = () => {
           });
         }
       } else {
+        soundEffects.playWarning();
         addNotification({
           type: 'warning',
           header: 'Product Not Found',
@@ -215,6 +269,7 @@ export const POSPage: React.FC = () => {
       const matched = getProductByBarcode(q);
       if (matched) {
         if (matched.stockQuantity <= 0) {
+          soundEffects.playWarning();
           addNotification({
             type: 'error',
             header: 'Out of Stock',
@@ -222,6 +277,7 @@ export const POSPage: React.FC = () => {
           });
         } else {
           addItem(matched, 1, 'primary');
+          soundEffects.playScanBeep();
           setSearchQuery('');
           addNotification({
             type: 'success',
@@ -334,6 +390,7 @@ export const POSPage: React.FC = () => {
     });
 
     clearCart();
+    soundEffects.playSuccessChime();
     setCompletedInvoice(newInvoice);
     addNotification({
       type: 'success',
@@ -387,6 +444,7 @@ export const POSPage: React.FC = () => {
     });
 
     clearCart();
+    soundEffects.playSuccessChime();
     setIsPaymentModalOpen(false);
     setCompletedInvoice(newInvoice);
     addNotification({
@@ -522,11 +580,37 @@ export const POSPage: React.FC = () => {
                   {drawerSession.isOpen ? `Active • ${formatMoney(drawerSession.openingFloat, profile.currencySymbol)}` : 'Closed'}
                 </Badge>
               </div>
-              {!isMobile && (
-                <span style={{ fontSize: '12px', color: colors.textSecondary }}>
-                  <kbd style={{ padding: '2px 4px', background: colors.kbdBg, borderRadius: '4px', border: `1px solid ${colors.kbdBorder}`, color: colors.kbdText }}>F2</kbd> Scan • <kbd style={{ padding: '2px 4px', background: colors.kbdBg, borderRadius: '4px', border: `1px solid ${colors.kbdBorder}`, color: colors.kbdText }}>F4</kbd> Hold • <kbd style={{ padding: '2px 4px', background: colors.kbdBg, borderRadius: '4px', border: `1px solid ${colors.kbdBorder}`, color: colors.kbdText }}>F9</kbd> Pay
-                </span>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  title={soundEnabled ? "Mute Scanner Sound" : "Enable Scanner Sound"}
+                  onClick={toggleSound}
+                >
+                  {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} className="text-red-500" />}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs font-medium"
+                  onClick={() => setIsRecentSalesOpen(true)}
+                  title="View recent transactions & reprint receipts"
+                >
+                  <History size={14} />
+                  <span>Recent Sales</span>
+                </Button>
+                {!isMobile && (
+                  <button
+                    type="button"
+                    onClick={() => setIsShortcutsOpen(true)}
+                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer transition-colors ml-1"
+                    title="Click to view all keyboard shortcuts"
+                  >
+                    <kbd style={{ padding: '2px 4px', background: colors.kbdBg, borderRadius: '4px', border: `1px solid ${colors.kbdBorder}`, color: colors.kbdText }}>F2</kbd> Scan • <kbd style={{ padding: '2px 4px', background: colors.kbdBg, borderRadius: '4px', border: `1px solid ${colors.kbdBorder}`, color: colors.kbdText }}>F4</kbd> Hold • <kbd style={{ padding: '2px 4px', background: colors.kbdBg, borderRadius: '4px', border: `1px solid ${colors.kbdBorder}`, color: colors.kbdText }}>F9</kbd> Pay
+                  </button>
+                )}
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -545,6 +629,17 @@ export const POSPage: React.FC = () => {
                   
                 />
               </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 whitespace-nowrap text-xs font-medium shrink-0"
+                onClick={() => setIsCustomItemOpen(true)}
+                title="Add a custom/miscellaneous item or fee to ticket"
+              >
+                <PlusCircle size={15} />
+                <span className="hidden sm:inline">Custom Item</span>
+              </Button>
 
               {/* Compact View Mode Icon Toggle */}
               <div
@@ -673,7 +768,7 @@ export const POSPage: React.FC = () => {
                     <div
                       key={product.id}
                       onClick={() => {
-                        if (!isOutOfStock) addItem(product, 1, 'primary');
+                        if (!isOutOfStock) { addItem(product, 1, 'primary'); soundEffects.playScanBeep(); }
                       }}
                       style={{
                         border: `1px solid ${colors.border}`,
@@ -788,7 +883,7 @@ export const POSPage: React.FC = () => {
                           <Button
                             variant="default"
                             disabled={isOutOfStock}
-                            onClick={() => addItem(p, 1, 'primary')}
+                            onClick={() => { addItem(p, 1, 'primary'); soundEffects.playScanBeep(); }}
                           >
                             + Add
                           </Button>
@@ -939,19 +1034,30 @@ export const POSPage: React.FC = () => {
             </div>
 
             {/* Quick Customer Selector with Search Bar */}
-            <select
-              value={customer ? customer.id : 'cust-walkin'}
-              onChange={(e) => {
-                const found = customers.find((c) => c.id === e.target.value);
-                setCustomer(found || null);
-              }}
-              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="cust-walkin">Walk-in Cash Customer</option>
-              {customers.filter((c) => c.id !== 'cust-walkin').map((c) => (
-                <option key={c.id} value={c.id}>{c.name} - {c.phone}</option>
-              ))}
-            </select>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <select
+                value={customer ? customer.id : 'cust-walkin'}
+                onChange={(e) => {
+                  const found = customers.find((c) => c.id === e.target.value);
+                  setCustomer(found || null);
+                }}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="cust-walkin">Walk-in Cash Customer</option>
+                {customers.filter((c) => c.id !== 'cust-walkin').map((c) => (
+                  <option key={c.id} value={c.id}>{c.name} {c.phone ? `(${c.phone})` : ''}</option>
+                ))}
+              </select>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 shrink-0"
+                title="Register New Customer"
+                onClick={() => setIsAddCustomerOpen(true)}
+              >
+                <UserPlus size={16} />
+              </Button>
+            </div>
           </div>
 
           {/* Cart Line Items Scroll Area */}
@@ -1053,6 +1159,31 @@ export const POSPage: React.FC = () => {
                               <span style={{ opacity: 0.75 }}>(Switch)</span>
                             </button>
                           )}
+                          <button
+                            type="button"
+                            title="Set item discount"
+                            onClick={() => {
+                              setItemDiscountTarget(item.id);
+                              setLineDiscountValue(String(item.discountPercentage || 0));
+                            }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              background: item.discountPercentage > 0 ? (isDark ? '#064e3b' : '#ecfdf5') : 'transparent',
+                              border: item.discountPercentage > 0 ? '1px solid #10b981' : `1px solid ${colors.border}`,
+                              borderRadius: '12px',
+                              color: item.discountPercentage > 0 ? (isDark ? '#6ee7b7' : '#047857') : colors.textSecondary,
+                              padding: '1px 7px',
+                              fontSize: '10px',
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                              transition: 'all 0.15s ease',
+                            }}
+                          >
+                            <Percent size={9} />
+                            <span>{item.discountPercentage > 0 ? `${item.discountPercentage}% OFF` : 'Discount'}</span>
+                          </button>
                           {rawProduct && rawProduct.stockQuantity <= 5 && (
                             <span style={{ fontSize: '10px', color: '#dc2626', background: isDark ? '#450a0a' : '#fee2e2', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>
                               Only {rawProduct.stockQuantity} in stock
@@ -1215,9 +1346,24 @@ export const POSPage: React.FC = () => {
             }}
           >
             {/* Totals Breakdown */}
-            <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', color: colors.textSecondary, marginBottom: '2px', padding: '0 2px' }}>
+            <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: colors.textSecondary, marginBottom: '2px', padding: '0 2px' }}>
               <span>Subtotal: <CurrencyText amount={totals.subtotal} /></span>
-              {totals.discountTotal > 0 && <span style={{ color: '#16a34a' }}>Disc: -<CurrencyText amount={totals.discountTotal} /></span>}
+              <button
+                type="button"
+                onClick={() => {
+                  setOrderDiscountValue(String(overallDiscountPercentage || 0));
+                  setIsOrderDiscountOpen(true);
+                }}
+                className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors"
+                title="Apply order-level discount"
+              >
+                <Percent size={11} />
+                {overallDiscountPercentage > 0 ? (
+                  <span className="text-emerald-500 font-bold">{overallDiscountPercentage}% Bill Disc (-<CurrencyText amount={totals.discountTotal} />)</span>
+                ) : (
+                  <span>+ Order Disc</span>
+                )}
+              </button>
               <span>Tax: <CurrencyText amount={totals.taxTotal} /></span>
             </div>
 
@@ -1532,6 +1678,420 @@ export const POSPage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Order Discount Modal */}
+      <Dialog open={isOrderDiscountOpen} onOpenChange={setIsOrderDiscountOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Percent className="h-5 w-5 text-primary" />
+              <span>Order Discount</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex flex-col gap-1.5">
+              <Label>Discount Percentage (%)</Label>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                placeholder="0"
+                value={orderDiscountValue}
+                onChange={(e) => setOrderDiscountValue(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[0, 5, 10, 15, 20, 25].map((pct) => (
+                <Button
+                  key={pct}
+                  type="button"
+                  variant={Number(orderDiscountValue) === pct ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setOrderDiscountValue(String(pct))}
+                >
+                  {pct === 0 ? 'Clear (0%)' : `${pct}%`}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsOrderDiscountOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                const val = Math.max(0, Math.min(100, parseFloat(orderDiscountValue) || 0));
+                setOverallDiscount(val);
+                setIsOrderDiscountOpen(false);
+                addNotification({
+                  type: 'info',
+                  header: 'Order Discount',
+                  content: val > 0 ? `Applied ${val}% discount to ticket.` : 'Cleared order discount.',
+                });
+              }}
+            >
+              Apply Discount
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Line Item Discount Modal */}
+      <Dialog open={!!itemDiscountTarget} onOpenChange={(open) => !open && setItemDiscountTarget(null)}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Percent className="h-5 w-5 text-primary" />
+              <span>Line Item Discount</span>
+            </DialogTitle>
+          </DialogHeader>
+          {(() => {
+            const targetItem = items.find((i) => i.id === itemDiscountTarget);
+            if (!targetItem) return null;
+            const targetProd = products.find((p) => p.id === targetItem.productId);
+            return (
+              <div className="flex flex-col gap-4 py-2">
+                <div className="text-sm">
+                  <div className="font-semibold text-foreground">{targetItem.productName}</div>
+                  <div className="text-xs text-muted-foreground">Rate: {formatMoney(targetItem.unitPrice, profile.currencySymbol)} / {targetItem.unitName}</div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label>Discount Percentage (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    placeholder="0"
+                    value={lineDiscountValue}
+                    onChange={(e) => setLineDiscountValue(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[0, 5, 10, 15, 20, 50].map((pct) => (
+                    <Button
+                      key={pct}
+                      type="button"
+                      variant={Number(lineDiscountValue) === pct ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setLineDiscountValue(String(pct))}
+                    >
+                      {pct === 0 ? 'Clear (0%)' : `${pct}%`}
+                    </Button>
+                  ))}
+                </div>
+                <DialogFooter className="mt-2">
+                  <Button variant="outline" onClick={() => setItemDiscountTarget(null)}>Cancel</Button>
+                  <Button
+                    onClick={() => {
+                      const val = Math.max(0, Math.min(100, parseFloat(lineDiscountValue) || 0));
+                      if (targetProd) {
+                        updateItemDiscount(targetItem.id, val, targetProd);
+                      } else {
+                        updateItemDiscount(targetItem.id, val, {
+                          id: targetItem.productId,
+                          name: targetItem.productName,
+                          description: '',
+                          sku: targetItem.sku,
+                          barcode: targetItem.sku,
+                          category: 'Custom',
+                          primaryUnit: targetItem.unitName,
+                          packagingUnit: targetItem.unitName,
+                          packagingMultiplier: 1,
+                          costPrice: targetItem.costPrice,
+                          retailPrice: targetItem.unitPrice,
+                          wholesaleTiers: [],
+                          taxRate: targetItem.taxRate,
+                          stockQuantity: 9999,
+                          reorderLevel: 0,
+                          batches: [],
+                          active: true,
+                        });
+                      }
+                      setItemDiscountTarget(null);
+                    }}
+                  >
+                    Save
+                  </Button>
+                </DialogFooter>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick Add Customer Modal */}
+      <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-primary" />
+              <span>Register New Customer</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 py-2">
+            <div className="flex flex-col gap-1.5">
+              <Label>Full Name *</Label>
+              <Input
+                placeholder="Customer Name"
+                value={newCustomerName}
+                onChange={(e) => setNewCustomerName(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Phone Number *</Label>
+              <Input
+                placeholder="e.g. +1 555-0199"
+                value={newCustomerPhone}
+                onChange={(e) => setNewCustomerPhone(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Email Address (Optional)</Label>
+              <Input
+                type="email"
+                placeholder="customer@example.com"
+                value={newCustomerEmail}
+                onChange={(e) => setNewCustomerEmail(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddCustomerOpen(false)}>Cancel</Button>
+            <Button
+              disabled={!newCustomerName.trim() || !newCustomerPhone.trim()}
+              onClick={() => {
+                const created = useCustomerStore.getState().addCustomer({
+                  name: newCustomerName.trim(),
+                  phone: newCustomerPhone.trim(),
+                  email: newCustomerEmail.trim() || undefined,
+                  type: 'retail',
+                  tier: 'standard',
+                  paymentTerms: 'cod',
+                  creditLimit: 0,
+                });
+                setCustomer(created);
+                setNewCustomerName('');
+                setNewCustomerPhone('');
+                setNewCustomerEmail('');
+                setIsAddCustomerOpen(false);
+                addNotification({
+                  type: 'success',
+                  header: 'Customer Created',
+                  content: `Added ${created.name} and selected for current bill.`,
+                });
+              }}
+            >
+              Save & Select
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Item Modal */}
+      <Dialog open={isCustomItemOpen} onOpenChange={setIsCustomItemOpen}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PlusCircle className="h-5 w-5 text-primary" />
+              <span>Add Custom / Misc Item</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 py-2">
+            <div className="flex flex-col gap-1.5">
+              <Label>Item / Service Name *</Label>
+              <Input
+                placeholder="e.g. Alteration, Delivery Fee, Custom Pack"
+                value={customItemName}
+                onChange={(e) => setCustomItemName(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label>Price *</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={customItemPrice}
+                  onChange={(e) => setCustomItemPrice(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label>Quantity</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={customItemQty}
+                  onChange={(e) => setCustomItemQty(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Tax Rate (%)</Label>
+              <select
+                value={customItemTax}
+                onChange={(e) => setCustomItemTax(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="0">0% (Tax Exempt)</option>
+                <option value="5">5% Standard</option>
+                <option value="12">12% Standard</option>
+                <option value="18">18% Standard</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCustomItemOpen(false)}>Cancel</Button>
+            <Button
+              disabled={!customItemName.trim() || !parseFloat(customItemPrice)}
+              onClick={() => {
+                const price = parseFloat(customItemPrice) || 0;
+                const qty = Math.max(1, parseInt(customItemQty) || 1);
+                const tax = parseFloat(customItemTax) || 0;
+                const tempProduct: Product = {
+                  id: `custom-prod-${Date.now()}`,
+                  name: customItemName.trim(),
+                  description: 'Custom service or fee',
+                  sku: `MISC-${Date.now().toString().slice(-4)}`,
+                  barcode: `MISC-${Date.now().toString().slice(-4)}`,
+                  category: 'Custom Services',
+                  primaryUnit: 'item',
+                  packagingUnit: 'item',
+                  packagingMultiplier: 1,
+                  costPrice: 0,
+                  retailPrice: price,
+                  wholesaleTiers: [],
+                  taxRate: tax,
+                  stockQuantity: 9999,
+                  reorderLevel: 0,
+                  batches: [],
+                  active: true,
+                };
+                addItem(tempProduct, qty, 'primary');
+                soundEffects.playScanBeep();
+                setCustomItemName('');
+                setCustomItemPrice('');
+                setCustomItemQty('1');
+                setIsCustomItemOpen(false);
+                addNotification({
+                  type: 'success',
+                  header: 'Custom Item Added',
+                  content: `Added ${tempProduct.name} to ticket.`,
+                });
+              }}
+            >
+              Add to Ticket
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Recent Counter Sales Modal */}
+      <Dialog open={isRecentSalesOpen} onOpenChange={setIsRecentSalesOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5 text-primary" />
+              <span>Recent Counter Transactions</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 max-h-[60vh] overflow-y-auto">
+            {recentSales.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No recent sales recorded on this register yet.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {recentSales.map((inv) => (
+                  <div
+                    key={inv.id}
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/40 transition-colors gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 font-semibold text-sm">
+                        <span>#{inv.invoiceNumber}</span>
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold">
+                          {inv.payments[0]?.method || 'Cash'}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {inv.date} • {inv.customerName} • {inv.items.length} {inv.items.length === 1 ? 'item' : 'items'}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <div className="font-bold text-sm text-primary">
+                          <CurrencyText amount={inv.grandTotal} />
+                        </div>
+                        <div className="text-[11px] text-emerald-600 font-medium">Completed</div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 h-8 text-xs"
+                        onClick={() => {
+                          setIsRecentSalesOpen(false);
+                          setCompletedInvoice(inv);
+                        }}
+                      >
+                        <Receipt size={14} />
+                        <span>Reprint</span>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRecentSalesOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Keyboard Shortcuts Cheat Sheet Modal */}
+      <Dialog open={isShortcutsOpen} onOpenChange={setIsShortcutsOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Keyboard className="h-5 w-5 text-primary" />
+              <span>POS Keyboard Shortcuts</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 flex flex-col gap-2.5 text-sm">
+            {[
+              { key: 'F2', label: 'Scan & Search', desc: 'Focuses the barcode scanner and search input' },
+              { key: 'F4', label: 'Park Current Bill', desc: 'Saves current cart to held tickets for multi-customer line' },
+              { key: 'F8', label: 'Clear Cart', desc: 'Empties all items from the current active bill' },
+              { key: 'F9', label: 'Tender / Checkout', desc: 'Opens payment modal with exact change calculations' },
+              { key: 'Enter', label: 'Auto Add on Scanner', desc: 'Submits scanned barcode directly to cart' },
+              { key: 'Esc', label: 'Close Dialogs', desc: 'Dismisses open modals and popups' },
+            ].map((s) => (
+              <div key={s.key} className="flex items-center justify-between p-2.5 rounded border bg-card">
+                <div className="flex items-center gap-3">
+                  <kbd className="px-2.5 py-1 text-xs font-mono font-bold bg-muted border rounded shadow-sm">
+                    {s.key}
+                  </kbd>
+                  <div>
+                    <div className="font-semibold text-xs">{s.label}</div>
+                    <div className="text-[11px] text-muted-foreground">{s.desc}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsShortcutsOpen(false)}>Got it</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };
